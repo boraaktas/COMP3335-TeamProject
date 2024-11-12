@@ -10,7 +10,7 @@
 
 <body>
     <h2>Login</h2>
-        <form action="ourphpfile.php", method="post">
+        <form action="login.php", method="post">
             <label for="username">Username:</label>
             <input type="text" id="username" name="username" required><br><br>
 
@@ -19,6 +19,17 @@
 
             <button type="submit">Login</button>
         </form>
+
+        <p id="error-message" style="color:red;"></p>
+
+        <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+
+            if (error){
+                document.getElementById('error-message').textContent = decodeURIComponent(error);
+            }
+        </script>
 </body>
 </html>
 

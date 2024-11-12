@@ -7,7 +7,6 @@
     <meta charset= "UTF-8">
     <title>Welcome to the MedTestLab Website.</title>
 </head>
-
 <body>
     <h2>Login</h2>
         <form action="login.php", method="post">
@@ -15,7 +14,15 @@
             <input type="text" id="username" name="username" required><br><br>
 
             <label for="password">Password:</label>
-            <input type="text" id="password" name="password" required><br><br>
+            <input type="password" id="password" name="password" placeholder="Enter password" required><br><br>
+
+             <!-- Access Level Dropdown -->
+            <label for="access_level">Access Level:</label>
+            <select id="access_level" name="access_level" required>
+                <option value="patient" selected>Patient</option>
+                <option value="lab_staff">Lab Staff</option>
+                <option value="secretary">Secretary</option>
+            </select><br><br>
 
             <button type="submit">Login</button>
         </form>

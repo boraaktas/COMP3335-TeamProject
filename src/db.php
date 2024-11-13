@@ -8,8 +8,12 @@ $dbpass = "mypassword";
 
 $conn = new mysqli($host, $dbuser, $dbpass, $dbname);
 
-if(!$conn->connect_error) {
+if($conn->connect_error) {
     die("Connection to Database failed!\n". $conn->connect_error);
+}else{
 }
+
+
+return $conn;
 
 ?>

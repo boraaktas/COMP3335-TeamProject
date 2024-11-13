@@ -3,12 +3,10 @@
 
 class UserModel{
 
-    private $db;
 
-
-    public function __construct() {
-        require_once "db.php"; 
-        $this->db = $db;
+    public function connectDB(){
+        require "db.php"; 
+        return $conn;
     }
 
     public function getUserByUserName($username, $accLevel){
@@ -24,16 +22,17 @@ class UserModel{
             case "Secretary":
                 $table = "staffs";
             default:
-                return null;
+                $table = "patients";
         }
 
-        $stmt = $this->db->prepare("SELECT * FROM `$table` WHERE surname=?");
+        $db = $this->connectDb();
+        $stmt = $db->prepare("SELECT * FROM `$table` WHERE surname=?");
 
         if ($stmt === false) {
-            die("Error preparing statement: " . $this->db->error);
+            die("Error preparing statement: " . $db->error);
         }
 
-        $stmt->bind_param("s", $this->$username);
+        $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
         if ($result->num_rows > 0) {
@@ -46,7 +45,7 @@ class UserModel{
 
     public function authenticate($username, $password, $accLevel){
         $user = $this-> getUserByUserName($username, $accLevel);
-        if($user && password_verify($password, $user['password'])){
+        if($user && ($password == $user['password'])){ // Will be exchanged with the passowrd_verify function but that needs some preprocessing
             return true;    
         }else{
             return false;

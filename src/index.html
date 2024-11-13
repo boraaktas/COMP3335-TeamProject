@@ -16,13 +16,16 @@
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" placeholder="Enter password" required><br><br>
 
-             <!-- Access Level Dropdown -->
+            <!-- Access Level Dropdown -->
             <label for="access_level">Access Level:</label>
             <select id="access_level" name="access_level" required>
                 <option value="patient" selected>Patient</option>
                 <option value="lab_staff">Lab Staff</option>
                 <option value="secretary">Secretary</option>
             </select><br><br>
+        
+            <!-- Hidden field to ensure the access level is always sent -->
+            <input type="hidden" name="access_level" id="hidden_access_level" value="patient">
 
             <button type="submit">Login</button>
         </form>

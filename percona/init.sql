@@ -4,11 +4,11 @@ CREATE TABLE IF NOT EXISTS patients (
     patientID INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     surname VARCHAR(255) NOT NULL,
-    birthdate DATE,
+    birthdate DATE NOT NULL,
     phoneNo VARCHAR(255),
     email VARCHAR(255) NOT NULL UNIQUE, 
     password VARCHAR(255) NOT NULL,
-    insuranceType VARCHAR(255)
+    insuranceType VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS staffs (

@@ -3,8 +3,6 @@
 
 class UserModel{
 
-
-
     private function connectDB() {
         require "db.php"; 
         return $conn;

@@ -49,7 +49,7 @@ class UserModel{
     public function addPatient($name, $surname, $phone, $birthdate ,$mail ,$password, $accLevel){
 
 
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+        $hashedPassword = password_hash($password, PASSWORD_ARGON2ID); //Argon2i is very safe
 
         $db = $this->connectDB();
 
@@ -67,8 +67,7 @@ class UserModel{
 
     public function authenticate($username, $password, $accLevel){
         $user = $this-> getUserByUserName($username, $accLevel);
-        $hash = password_hash($user['password'], PASSWORD_BCRYPT);
-        if($user && password_verify($password,  $hash)){ // Will be exchanged with the passowrd_verify function but that needs some preprocessing
+        if($user && password_verify($password,  $user['password'])){ // Checks if the Input password is the same as the hash in the DB
             return true;    
         }else{
             return false;

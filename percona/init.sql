@@ -72,14 +72,14 @@ CREATE TABLE IF NOT EXISTS billing (
 
 
 INSERT INTO patients (name, surname, birthdate, phoneNo, email, password, insuranceType) 
-VALUES ('Alice', 'Chan', '1990-01-01', '12345678', 'alice@gmail.com', '123456', 'AIA'),
-       ('Bob', 'Lee', '1991-02-02', '87654321', 'bob@gmail.com', '123456', 'AXA'),
-       ('Charlie', 'Wong', '1992-03-03', '12345678', 'charlie@gmail.com', '123456', 'Prudential');
+VALUES ('Alice', 'Chan', '1990-01-01', '12345678', 'alice@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'AIA'),
+       ('Bob', 'Lee', '1991-02-02', '87654321', 'bob@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'AXA'),
+       ('Charlie', 'Wong', '1992-03-03', '12345678', 'charlie@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'Prudential');
 
 INSERT INTO staffs (name, surname, phoneNo, email, password, role)
-VALUES ('David', 'Chan', '12345678', 'david@gmail.com', '123456', 'labStaff'),
-       ('Eva', 'Lee', '87654321', 'eva@gmail.com', '123456', 'secretary'),
-       ('Frank', 'Wong', '12345678', 'frank@gmail.com', '123456', 'labStaff');
+VALUES ('David', 'Chan', '12345678', 'david@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'labStaff'),
+       ('Eva', 'Lee', '87654321', 'eva@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'secretary'),
+       ('Frank', 'Wong', '12345678', 'frank@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'labStaff');
 
 INSERT INTO testCatalogs (testName, cost, testDescription) 
 VALUES ('Blood Test', 100, 'Test for blood'),

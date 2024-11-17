@@ -23,7 +23,15 @@ include('header.php');
     <title>Dashboard</title>
 </head>
 <body>
-    <h1>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>.</h1>
+    <h1>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?> to the lab staff dashboard from MedTestLab.</h1>
+    <label for="task">Task:</label>
+            <select id="task" name="task" required>
+                <option value="result_reporting" selected>Result reporting</option>
+                <option value="tests">Tests</option>
+            </select><br><br>
+
+            <button type="submit">Execute</button>
+            <br><br>
     <a href="logout.php">Logout</a>
 </body>
 </html>

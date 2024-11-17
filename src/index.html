@@ -23,15 +23,12 @@
                 <option value="lab_staff">Lab Staff</option>
                 <option value="secretary">Secretary</option>
             </select><br><br>
-        
-            <!-- Hidden field to ensure the access level is always sent -->
-            <input type="hidden" name="access_level" id="hidden_access_level" value="patient">
 
             <button type="submit">Login</button>
         </form>
 
         <p id="error-message" style="color:red;"></p>
-
+        <!--Java Script code for error messages-->
         <script>
             const urlParams = new URLSearchParams(window.location.search);
             const error = urlParams.get('error');

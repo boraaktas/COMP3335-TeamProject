@@ -1,42 +1,33 @@
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset= "UTF-8">
-    <title>Welcome to the MedTestLab Website.</title>
+    <meta charset="UTF-8">
+    <title>Login - MedTestLab</title>
 </head>
 <body>
     <h2>Login</h2>
-        <form action="login.php" method="post">
-            <label for="email">Email:</label>
-            <input type="text" id="email" name="email" required><br><br>
+    <form action="login.php" method="post">
+        <!-- CSRF Token -->
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
 
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" placeholder="Enter password" required><br><br>
+        <label for="email">Email:</label>
+        <input type="text" id="email" name="email" placeholder="Enter your email" required><br><br>
 
-            <!-- Access Level Dropdown -->
-            <label for="access_level">Access Level:</label>
-            <select id="access_level" name="access_level" required>
-                <option value="patient" selected>Patient</option>
-                <option value="lab_staff">Lab Staff</option>
-                <option value="secretary">Secretary</option>
-            </select><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" placeholder="Enter your password" required><br><br>
 
-            <button type="submit">Login</button>
-        </form>
+        <button type="submit">Login</button>
+    </form>
 
-        <p id="error-message" style="color:red;"></p>
-        <!--Java Script code for error messages-->
-        <script>
-            const urlParams = new URLSearchParams(window.location.search);
-            const error = urlParams.get('error');
+    <p id="error-message" style="color: red;"></p>
 
-            if (error){
-                document.getElementById('error-message').textContent = decodeURIComponent(error);
-            }
-        </script>
+    <!-- JavaScript for Error Message -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error) {
+            document.getElementById('error-message').textContent = decodeURIComponent(error);
+        }
+    </script>
 </body>
 </html>
-

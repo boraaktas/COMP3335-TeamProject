@@ -1,100 +1,59 @@
 <?php
-/*
-require_once "UserModel.php";
-
-
+require_once "db.php";
 session_start();
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST'){
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['email'] ?? null;
+    $password = $_POST['password'] ?? null;
 
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-    $accLevel = $_POST['access_level'];
-
-    $userModel = new UserModel();
-
-    $userModel->connectDB('root');
-    if ($userModel->authenticate($email, $password, $accLevel)) {
-        // Store session information
-        $_SESSION['email'] = $email;
-        $_SESSION['isLoggedIn'] = true;
-        $_SESSION['access_level'] = $accLevel;
-
-        // Reconnect as the specific role user
-        $userModel->connectDB($accLevel);
-
-        // Redirect to the appropriate dashboard
-        if ($accLevel == "lab_staff") {
-            header("Location: dashboard_labstaff.php");
-        } elseif ($accLevel == "patient") {
-            header("Location: dashboard_patient.php");
-        } elseif ($accLevel == "secretary") {
-            header("Location: dashboard_secretary.php");
-        }
-        exit;
-    }else{
-        header("Location: index.html?error=Invalid%20username%20or%20password");
+    // Validate input fields
+    if (!$email || !$password) {
+        header("Location: index.html?error=All%20fields%20are%20required.");
         exit;
     }
-}else{
-    include "index.html";
-}
-    */
 
+    try {
+        // Authenticate the user
+        $authResponse = authenticateUser($email, $password);
 
-    require_once "db.php";
-    session_start();
-    
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $email = $_POST['email'];
-        $password = $_POST['password'];
-        $accLevel = $_POST['access_level'];
-    
-        try {
-            // Authenticate the user
-            $authResponse = authenticateUser($email, $password);
-    
-            if ($authResponse['status']) {
-                // Regenerate session ID to prevent session fixation
-                session_regenerate_id(true);
-    
-                // Store session details
-                $_SESSION['email'] = $email;
-                $_SESSION['isLoggedIn'] = true;
-                $_SESSION['access_level'] = $accLevel;
-                $_SESSION['userID'] = $authResponse['userID'];
-    
-                // Map access levels to dashboards
-                $dashboards = [
-                    'lab_staff' => 'dashboard_labstaff.php',
-                    'patient' => 'dashboard_patient.php',
-                    'secretary' => 'dashboard_secretary.php',
-                ];
-    
-                // Redirect based on access level
-                if (array_key_exists($accLevel, $dashboards)) {
-                    header("Location: " . $dashboards[$accLevel]);
-                    exit;
-                } else {
-                    // Handle unexpected access levels
-                    $_SESSION['error'] = 'Invalid access level.';
-                    header("Location: index.html");
-                    exit;
-                }
+        if ($authResponse['status']) {
+            // Regenerate session ID to prevent session fixation
+            session_regenerate_id(true);
+
+            // Store session details
+            $_SESSION['userID'] = $authResponse['userID'];
+            $_SESSION['email'] = $email;
+            $_SESSION['role'] = $authResponse['role'];
+            $_SESSION['isLoggedIn'] = true;
+
+            // Map roles to dashboards
+            $dashboards = [
+                'patient' => 'dashboard_patient.php',
+                'labStaff' => 'dashboard_labstaff.php',
+                'secretary' => 'dashboard_secretary.php',
+            ];
+
+            // Redirect to the appropriate dashboard
+            if (array_key_exists($authResponse['role'], $dashboards)) {
+                header("Location: " . $dashboards[$authResponse['role']]);
+                exit;
             } else {
-                // Invalid credentials
-                $_SESSION['error'] = $authResponse['message'];
-                header("Location: index.html");
+                header("Location: index.html?error=Unauthorized%20role.");
                 exit;
             }
-        } catch (Exception $e) {
-            // Handle database or connection errors
-            $_SESSION['error'] = 'An error occurred. Please try again later.';
-            header("Location: index.html");
+        } else {
+            // Invalid credentials
+            header("Location: index.html?error=" . urlencode($authResponse['message']));
             exit;
         }
-    } else {
-        // If not a POST request, load the login page
-        include "index.html";
+    } catch (Exception $e) {
+        // Handle database or server errors
+        header("Location: index.html?error=An%20unexpected%20error%20occurred.");
+        exit;
     }
-    
+} else {
+    // If not a POST request, redirect to login page
+    header("Location: index.html");
+    exit;
+}
+?>

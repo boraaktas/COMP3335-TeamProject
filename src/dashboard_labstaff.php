@@ -1,25 +1,24 @@
 <?php
 session_start();
 
-// If not logged in, redirect to login page
-if (!isset($_SESSION['isLoggedIn']) || !$_SESSION['isLoggedIn']) {
-    header("Location: login.php");
+// Ensure the user is logged in and has the correct role
+if (!isset($_SESSION['isLoggedIn']) || $_SESSION['role'] !== 'labStaff') {
+    header("Location: unauthorized.php");
     exit;
 }
 
-// Include common header part
-include('header.php');
-
-// Display the actual dashboard content
+// Generate CSRF token for form submission
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard</title>
+    <title>Lab Staff Dashboard</title>
     <script>
-        // JavaScript function to update the input field dynamically
         function updateInputField() {
             const task = document.getElementById('task').value;
             const inputLabel = document.getElementById('input-label');
@@ -38,14 +37,16 @@ include('header.php');
     </script>
 </head>
 <body>
-    <h1>Welcome, <?php echo htmlspecialchars($_SESSION['email']); ?> to the lab staff dashboard from MedTestLab.</h1>
+    <h1>Welcome, <?php echo htmlspecialchars($_SESSION['email']); ?> to the Lab Staff Dashboard</h1>
     <form action="labstaff_functions.php" method="post">
+        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" placeholder="Enter password" required><br><br>
 
         <label for="task">Task:</label>
         <select id="task" name="task" onchange="updateInputField()" required>
-            <option value="result_reporting" selected>Result reporting</option>
+            <option value="result_reporting" selected>Result Reporting</option>
             <option value="tests">Tests</option>
         </select><br><br>
 
@@ -53,14 +54,8 @@ include('header.php');
         <input type="text" id="dynamic-input" name="email" placeholder="Enter email" required><br><br>
 
         <button type="submit">Execute</button>
-        <br><br>
     </form>
 
     <a href="logout.php">Logout</a>
 </body>
 </html>
-
-<?php
-// Include footer if needed
-include('footer.php');
-?>

@@ -22,10 +22,10 @@ if ($conn->connect_error) {
 // Initialize a variable to store table output
 $tableOutput = "";
 
-if ($_POST['task'] == "test_orders") {
+if ($_POST['task'] == "result_printing") {
     $passwordHash = password_hash($_POST['password'], PASSWORD_ARGON2ID);
     $stmt = $conn->prepare("SELECT * FROM `orders` WHERE PatientID = (SELECT DISTINCT PatientID FROM `patients` WHERE email = ?)");
-    $stmt->bind_param("s", $_SESSION['email']);
+    $stmt->bind_param("s", $_POST['email']);
     $stmt->execute();
     $result = $stmt->get_result();
     // The visualization of the results is just basic right now can be done more beautiful if necessary
@@ -56,58 +56,62 @@ if ($_POST['task'] == "test_orders") {
         $tableOutput.="</table>";
         $result->free();
     }else {
-        $tableOutput. "<p>No test orders found.</p>";
+        $tableOutput. "<p>No test results found.</p>";
     }
 
 
-}elseif ($_POST['task'] == "view_results") {
+}elseif ($_POST['task'] == "appointment") {
     $passwordHash = password_hash($_POST['password'], PASSWORD_ARGON2ID);
-    $stmt = $conn->prepare("SELECT * FROM `testResults` WHERE 
-                            OrderID = (SELECT OrderID FROM `orders` o
-                            JOIN `patients` p
-                            ON o.PatientID = p.PatientID
-                            WHERE email = ?)");
-    $stmt->bind_param("s", $_SESSION['email']);
+    $stmt = $conn->prepare("SELECT * FROM `appointments` WHERE 
+                            PatientID = (SELECT DISTINCT PatientID FROM `patients` WHERE email=?)
+                            AND SecretaryID=(SELECT StaffID FROM `staffs` WHERE email=?)");
+    $stmt->bind_param("ss", $_POST['email'], $_SESSION['email']);
     $stmt->execute();
     $result = $stmt->get_result();
     // The visualization of the results is just basic right now can be done more beautiful if necessary
     if ($result->num_rows > 0) {
         $tableOutput.="<table border='1'>
             <tr>
-            <th>Result ID</th>
+            <th>Appointment ID</th>
+            <th>Patient ID</th>
             <th>Order ID</th>
-            <th>Report URL</th>
-            <th>Interpretation</th>
-            <th>Lab staff ID</th>
+            <th>Secretary ID</th>
+            <th>Sampling type</th>
+            <th>Appointment Date</th>
+            <th>Appointment Time</th>
             </tr>";
         while ($row = $result->fetch_assoc()) {
-            $field1name = $row["resultID"];
-            $field2name = $row["orderID"];
-            $field3name = $row["reportURL"];
-            $field4name = $row["interpretation"];
-            $field5name = $row["labStaffID"]; 
+            $field1name = $row["appointmentID"];
+            $field2name = $row["patientID"];
+            $field3name = $row["orderID"];
+            $field4name = $row["secretaryID"];
+            $field5name = $row["samplingType"];
+            $field6name = $row["appointmentDate"];
+            $field7name = $row["appointmentTime"];
     
             $tableOutput.= '<tr> 
                       <td>'.$field1name.'</td> 
                       <td>'.$field2name.'</td> 
                       <td>'.$field3name.'</td> 
                       <td>'.$field4name.'</td> 
-                      <td>'.$field5name.'</td> 
+                      <td>'.$field5name.'</td>
+                      <td>'.$field6name.'</td>
+                      <td>'.$field7name.'</td>
                   </tr>';
         }
         $tableOutput.= "</table>";
         $result->free();
     }else {
-        $tableOutput. "<p>No results found.</p>";
+        $tableOutput. "<p>No appointments found.</p>";
     }
-}elseif ($_POST['task'] == "bills"){
+}elseif ($_POST['task'] == "billing"){
     $passwordHash = password_hash($_POST['password'], PASSWORD_ARGON2ID);
     $stmt = $conn->prepare("SELECT * FROM `billing` WHERE 
                             OrderID = (SELECT OrderID FROM `orders` o
                             JOIN `patients` p
                             ON o.PatientID = p.PatientID
                             WHERE email = ?)");
-    $stmt->bind_param("s", $_SESSION['email']);
+    $stmt->bind_param("s", $_POST['email']);
     $stmt->execute();
     $result = $stmt->get_result();
     // The visualization of the results is just basic right now can be done more beautiful if necessary

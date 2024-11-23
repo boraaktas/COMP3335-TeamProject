@@ -9,20 +9,20 @@ function getDatabaseCredentials($role) {
         ],
         'lab_staff' => [
             'host' => 'percona',
-            'username' => 'lab_staff_user',
-            'password' => 'lab_staff_password',
+            'username' => 'root',
+            'password' => 'mypassword',
             'dbname' => 'comp3335_database'
         ],
         'patient' => [
             'host' => 'percona',
-            'username' => 'patient_user',
-            'password' => 'patient_password',
+            'username' => 'root',
+            'password' => 'mypassword',
             'dbname' => 'comp3335_database'
         ],
         'secretary' => [
             'host' => 'percona',
-            'username' => 'secretary_user',
-            'password' => 'secretary_password',
+            'username' => 'root',
+            'password' => 'mypassword',
             'dbname' => 'comp3335_database'
         ]
     ];

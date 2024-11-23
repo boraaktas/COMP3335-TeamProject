@@ -6,7 +6,7 @@ class UserModel{
 
     private $db;
     public function connectDB($role = 'root') {
-        require "db.php"; 
+        require_once "db.php"; 
         $credentials = getDatabaseCredentials($role);
 
         $this->db = new mysqli(
@@ -24,24 +24,23 @@ class UserModel{
     }
 
     private function getAccTablename($accLevel){
+        $table = "";
         switch ($accLevel) {
-            case "Patient":
+            case "patient":
                 $table = "patients";
                 break;
-            case "Lab Staff":
+            case "lab_staff":
                 $table = "staffs";
                 break;
-            case "Secretary":
+            case "secretary":
                 $table = "staffs";
                 break;
-            default:
-                $table = "patients";
         }
         return $table;  
     }
 
     public function getUserByUserName($email, $accLevel){
-        
+
         $table = $this->getAccTablename($accLevel);
 
         $stmt = $this->db->prepare("SELECT * FROM `$table` WHERE email=?");

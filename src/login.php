@@ -46,20 +46,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST'){
     session_start();
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $username = $_POST['username'];
+        $email = $_POST['email'];
         $password = $_POST['password'];
         $accLevel = $_POST['access_level'];
     
         try {
             // Authenticate the user
-            $authResponse = authenticateUser($username, $password);
+            $authResponse = authenticateUser($email, $password);
     
             if ($authResponse['status']) {
                 // Regenerate session ID to prevent session fixation
                 session_regenerate_id(true);
     
                 // Store session details
-                $_SESSION['username'] = $username;
+                $_SESSION['email'] = $email;
                 $_SESSION['isLoggedIn'] = true;
                 $_SESSION['access_level'] = $accLevel;
                 $_SESSION['userID'] = $authResponse['userID'];

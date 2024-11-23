@@ -7,33 +7,30 @@ session_start();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST'){
 
-    $username = $_POST['username'];
+    $email = $_POST['email'];
     $password = $_POST['password'];
     $accLevel = $_POST['access_level'];
 
     $userModel = new UserModel();
 
-    if ($userModel->authenticate($username, $password, $accLevel) && ($accLevel == "lab_staff")) {
-        $_SESSION['username'] = $username;
+    $userModel->connectDB('root');
+    if ($userModel->authenticate($email, $password, $accLevel)) {
+        // Store session information
+        $_SESSION['email'] = $email;
         $_SESSION['isLoggedIn'] = true;
         $_SESSION['access_level'] = $accLevel;
 
-        header("Location: dashboard_labstaff.php");
-        exit;
+        // Reconnect as the specific role user
+        $userModel->connectDB($accLevel);
 
-    }elseif ($userModel->authenticate($username, $password, $accLevel) && ($accLevel == "patient")) {
-        $_SESSION['username'] = $username;
-        $_SESSION['isLoggedIn'] = true;
-        $_SESSION['access_level'] = $accLevel;
-
-        header("Location: dashboard_patient.php");
-        exit;
-    }elseif ($userModel->authenticate($username, $password, $accLevel) && ($accLevel == "secretary")) {
-        $_SESSION['username'] = $username;
-        $_SESSION['isLoggedIn'] = true;
-        $_SESSION['access_level'] = $accLevel;
-
-        header("Location: dashboard_secretary.php");
+        // Redirect to the appropriate dashboard
+        if ($accLevel == "lab_staff") {
+            header("Location: dashboard_labstaff.php");
+        } elseif ($accLevel == "patient") {
+            header("Location: dashboard_patient.php");
+        } elseif ($accLevel == "secretary") {
+            header("Location: dashboard_secretary.php");
+        }
         exit;
     }else{
         header("Location: index.html?error=Invalid%20username%20or%20password");

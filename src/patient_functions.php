@@ -7,12 +7,20 @@ session_start();
 
 if ($_POST['task'] == "test_orders") {
     $passwordHash = password_hash($_POST['password'], PASSWORD_ARGON2ID);
-    $stmt = $conn->prepare("SELECT * FROM `orders` WHERE PatientID = (SELECT PatientID FROM `patients` WHERE surname = ?)");
-    $stmt->bind_param("s", $_SESSION['username']);
+    $stmt = $conn->prepare("SELECT * FROM `orders` WHERE PatientID = (SELECT DISTINCT PatientID FROM `patients` WHERE email = ?)");
+    $stmt->bind_param("s", $_SESSION['email']);
     $stmt->execute();
     $result = $stmt->get_result();
     // The visualization of the results is just basic right now can be done more beautiful if necessary
     if ($result->num_rows > 0) {
+        echo "<table border='1'>
+            <tr>
+            <th>Order ID</th>
+            <th>Patient ID</th>
+            <th>Test Code</th>
+            <th>Order Date</th>
+            <th>Order Status</th>
+            </tr>";
         while ($row = $result->fetch_assoc()) {
             $field1name = $row["orderID"];
             $field2name = $row["patientID"];
@@ -31,6 +39,18 @@ if ($_POST['task'] == "test_orders") {
         $result->free();
     }
 
+
 }elseif ($_POST['task'] == "view_results") {
     //Not finished yet needs to be extended
 }
+
+
+?>
+
+<!DOCTYPE html>
+
+<html lang="en">
+
+    <a href="logout.php">Logout</a>
+
+</html>

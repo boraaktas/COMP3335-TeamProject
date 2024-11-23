@@ -1,16 +1,31 @@
 <?php
+function getDatabaseCredentials($role) {
+    $credentials = [
+        'root' => [
+            'host' => 'percona',
+            'username' => 'root',
+            'password' => 'mypassword',
+            'dbname' => 'comp3335_database'
+        ],
+        'lab_staff' => [
+            'host' => 'percona',
+            'username' => 'lab_staff_user',
+            'password' => 'lab_staff_password',
+            'dbname' => 'comp3335_database'
+        ],
+        'patient' => [
+            'host' => 'percona',
+            'username' => 'patient_user',
+            'password' => 'patient_password',
+            'dbname' => 'comp3335_database'
+        ],
+        'secretary' => [
+            'host' => 'percona',
+            'username' => 'secretary_user',
+            'password' => 'secretary_password',
+            'dbname' => 'comp3335_database'
+        ]
+    ];
 
-$host = "percona";
-$dbname = "comp3335_database";
-$dbuser = "root";
-$dbpass = "mypassword";
-
-
-$conn = new mysqli($host, $dbuser, $dbpass, $dbname);
-
-if($conn->connect_error) {
-    die("Connection to Database failed!\n". $conn->connect_error);
-}else{
+    return $credentials[$role] ?? $credentials['root'];
 }
-
-return $conn;

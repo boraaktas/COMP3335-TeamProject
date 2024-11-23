@@ -23,7 +23,7 @@ include('header.php');
     <title>Dashboard</title>
 </head>
 <body>
-    <h1>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?>to the secretary dashboard from MedTestLab</h1>
+    <h1>Welcome, <?php echo htmlspecialchars($_SESSION['email']); ?>to the secretary dashboard from MedTestLab</h1>
     <label for="task">Task:</label>
     <select id="task" name="task" required>
                 <option value="result_printing" selected>Result printing</option>

@@ -22,7 +22,7 @@ include('header.php');
     <meta charset="UTF-8">
     <title>Dashboard</title>
 </head>
-    <h1>Welcome, <?php echo htmlspecialchars($_SESSION['username']); ?> to the patient dashboard from MedTestLab.</h1>
+    <h1>Welcome, <?php echo htmlspecialchars($_SESSION['email']); ?> to the patient dashboard from MedTestLab.</h1>
     <form action="patient_functions.php" method="post">
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" placeholder="Enter password" required><br><br>
@@ -38,7 +38,6 @@ include('header.php');
                 <br><br>
     </form>
     <a href="logout.php">Logout</a>
-</body>
 </html>
 
 <?php

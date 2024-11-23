@@ -3,9 +3,24 @@
 
 class UserModel{
 
-    private function connectDB() {
+
+    private $db;
+    public function connectDB($role = 'root') {
         require "db.php"; 
-        return $conn;
+        $credentials = getDatabaseCredentials($role);
+
+        $this->db = new mysqli(
+            $credentials['host'],
+            $credentials['username'],
+            $credentials['password'],
+            $credentials['dbname']
+        );
+
+        if ($this->db->connect_error) {
+            die("Connection to Database failed: " . $this->db->connect_error);
+        }
+
+        return $this->db;
     }
 
     private function getAccTablename($accLevel){
@@ -18,24 +33,24 @@ class UserModel{
                 break;
             case "Secretary":
                 $table = "staffs";
+                break;
             default:
                 $table = "patients";
         }
         return $table;  
     }
 
-    public function getUserByUserName($username, $accLevel){
+    public function getUserByUserName($email, $accLevel){
         
         $table = $this->getAccTablename($accLevel);
 
-        $db = $this->connectDb();
-        $stmt = $db->prepare("SELECT * FROM `$table` WHERE surname=?");
+        $stmt = $this->db->prepare("SELECT * FROM `$table` WHERE email=?");
 
         if ($stmt === false) {
-            die("Error preparing statement: " . $db->error);
+            die("Error preparing statement: " . $this->db->error);
         }
 
-        $stmt->bind_param("s", $username);
+        $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
         if ($result->num_rows > 0) {
@@ -46,7 +61,7 @@ class UserModel{
     }
 
     // Has no purpose yet. Idea behind it is, if a staff or secretary is logged in he/she can add patients
-    public function addPatient($name, $surname, $phone, $birthdate ,$mail ,$password, $accLevel){
+    public function addPatient($name, $surname, $phone, $birthdate ,$email ,$password, $accLevel){
 
 
         $hashedPassword = password_hash($password, PASSWORD_ARGON2ID); //Argon2i is very safe
@@ -59,14 +74,14 @@ class UserModel{
             die("Error preparing statement: " . $db->error);
         }
 
-        $stmt->bind_param("ssssss", $name, $surname, $phone, $birthdate, $mail, $hashedPassword, $accLevel);
+        $stmt->bind_param("ssssss", $name, $surname, $phone, $birthdate, $email, $hashedPassword, $accLevel);
         $stmt->execute();
 
     }
 
 
-    public function authenticate($username, $password, $accLevel){
-        $user = $this-> getUserByUserName($username, $accLevel);
+    public function authenticate($email, $password, $accLevel){
+        $user = $this-> getUserByUserName($email, $accLevel);
         if($user && password_verify($password,  $user['password'])){ // Checks if the Input password is the same as the hash in the DB
             return true;    
         }else{

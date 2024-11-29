@@ -1,0 +1,11 @@
+apiVersion: 1
+contactPoints:
+    - orgId: 1
+      name: Test
+      receivers:
+        - uid: ee5e42e621vk0d
+          type: webhook
+          settings:
+            httpMethod: POST
+            url: http://host.docker.internal:3200/grafana-alert
+          disableResolveMessage: true

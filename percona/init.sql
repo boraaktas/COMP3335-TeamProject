@@ -237,9 +237,3 @@ INSERT INTO billing (orderID, billedAmount, paymentStatus, insuranceClaimStatus)
 VALUES (1, 100, 'Paid', 'Claimed'),
        (2, 200, 'Unpaid', 'Not Claimed'),
        (3, 300, 'Paid', 'Claimed');
-
--- exporter user for MySQL metrics collection by mysqld-exporter
-CREATE USER IF NOT EXISTS 'exporter'@'%' IDENTIFIED BY 'exporterpassword';
-GRANT PROCESS, REPLICATION CLIENT ON *.* TO 'exporter'@'%';
-FLUSH PRIVILEGES;
-

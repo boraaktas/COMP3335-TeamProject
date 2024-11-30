@@ -1,239 +1,406 @@
 CREATE DATABASE IF NOT EXISTS comp3335_database;
 USE comp3335_database;
+
+-- TABLES:
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+    userID INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARBINARY(255) NOT NULL,
+    iv VARBINARY(16) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+    roleID INT AUTO_INCREMENT PRIMARY KEY,
+    roleName VARCHAR(255) NOT NULL UNIQUE
+);
+
+-- Insert roles into the roles table
+INSERT INTO roles (roleName)
+VALUES ('labStaff'),
+       ('secretary'),
+       ('patient');
+
+CREATE TABLE IF NOT EXISTS userRoles (
+    userID INT PRIMARY KEY, -- Each user can have only one role
+    roleID INT NOT NULL,
+    FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE,
+    FOREIGN KEY (roleID) REFERENCES roles(roleID) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS patients (
-    patientID INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    surname VARCHAR(255) NOT NULL,
-    birthdate DATE NOT NULL,
+    patientID INT NOT NULL,
+    firstName VARCHAR(255) NOT NULL,
+    lastName VARCHAR(255) NOT NULL,
+    birthDate DATE NOT NULL,
     phoneNo VARCHAR(255),
-    email VARCHAR(255) NOT NULL UNIQUE, 
-    password VARCHAR(255) NOT NULL,
-    insuranceType VARCHAR(255) NOT NULL
+    insuranceType VARCHAR(255) NOT NULL,
+    FOREIGN KEY (patientID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS staffs (
-    staffID INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    surname VARCHAR(255) NOT NULL,
+    staffID INT NOT NULL,
+    firstName VARCHAR(255) NOT NULL,
+    lastName VARCHAR(255) NOT NULL,
     phoneNo VARCHAR(255),
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    role VARCHAR(255) NOT NULL
+    staffRole ENUM('labStaff', 'secretary') NOT NULL,
+    FOREIGN KEY (staffID) REFERENCES users(userID) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS testCatalogs (
-    testCode INT AUTO_INCREMENT PRIMARY KEY,
+    testID INT AUTO_INCREMENT PRIMARY KEY,
+    testCode INT NOT NULL UNIQUE,
     testName VARCHAR(255) NOT NULL,
-    cost INT NOT NULL,
+    testCost INT NOT NULL,
     testDescription TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS orders (
     orderID INT AUTO_INCREMENT PRIMARY KEY,
     patientID INT NOT NULL,
-    testCode INT NOT NULL,
-    orderDate DATE NOT NULL,
-    orderStatus VARCHAR(255) NOT NULL,
-    FOREIGN KEY (patientID) REFERENCES patients(patientID),
-    FOREIGN KEY (testCode) REFERENCES testCatalogs(testCode)
+    labStaffOrderID INT NOT NULL,
+    testID INT NOT NULL,
+    orderDate DATE NOT NULL,  -- Date when the order was placed
+    -- Order status can be one of the following:
+    -- Pending Appointment: Order is placed but no appointment is scheduled
+    -- Pending Result: Sampling is done but no result is available
+    -- Completed: Result is available
+    orderStatus ENUM('Pending Appointment', 'Pending Result', 'Completed') NOT NULL DEFAULT 'Pending Appointment',
+    FOREIGN KEY (patientID) REFERENCES patients(patientID) ON DELETE CASCADE,
+    FOREIGN KEY (labStaffOrderID) REFERENCES staffs(staffID) ON DELETE CASCADE,
+    FOREIGN KEY (testID) REFERENCES testCatalogs(testID) ON DELETE CASCADE
 );
 
+-- Appoinments are created, updated, and deleted by the secretaries
+-- When an appointment is created, change the orderStatus to 'Pending Result'. And if it is deleted, change the orderStatus to 'Pending Appointment'
+-- When an appointment is done, the secretary should update the orderStatus to 'Pending Result'
 CREATE TABLE IF NOT EXISTS appointments (
     appointmentID INT AUTO_INCREMENT PRIMARY KEY,
-    patientID INT NOT NULL,
     orderID INT NOT NULL,
     secretaryID INT NOT NULL,
-    samplingType VARCHAR(255),
-    appointmentDate DATE NOT NULL,
-    appointmentTime TIME NOT NULL,
-    FOREIGN KEY (patientID) REFERENCES patients(patientID),
-    FOREIGN KEY (orderID) REFERENCES orders(orderID),
-    FOREIGN KEY (secretaryID) REFERENCES staffs(staffID)
+    appointmentDateTime DATETIME NOT NULL,
+    FOREIGN KEY (orderID) REFERENCES orders(orderID) ON DELETE CASCADE,
+    FOREIGN KEY (secretaryID) REFERENCES staffs(staffID) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS testResults (
+-- When a test result is created, change the orderStatus to 'Completed', and if it is deleted, change the orderStatus to 'Pending Result'
+-- If orderSatus of the order is not 'Pending Result', then the test result cannot be created
+CREATE TABLE IF NOT EXISTS results (
     resultID INT AUTO_INCREMENT PRIMARY KEY,
     orderID INT NOT NULL,
-    reportURL VARCHAR(255) NOT NULL,
+    labStaffResultID INT,
     interpretation TEXT NOT NULL,
-    labStaffID INT NOT NULL,
-    FOREIGN KEY (orderID) REFERENCES orders(orderID),
-    FOREIGN KEY (labStaffID) REFERENCES staffs(staffID)
+    reportURL VARCHAR(255) NOT NULL,
+    FOREIGN KEY (orderID) REFERENCES orders(orderID) ON DELETE CASCADE,
+    FOREIGN KEY (labStaffResultID) REFERENCES staffs(staffID) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS billing (
+-- When an order is created, insert a row into the billings table with paymentStatus as 'Unpaid',
+-- and set insuranceClaimStatus based on the insuranceType of the patient
+-- if the insuranceType is in the acceptedInsurance table, then insuranceClaimStatus should be True, else False
+-- If the insuranceClaimStatus is True, then the billedAmount should be the cost of the test multiplied by the discountRate
+-- paymentStatus can be changed by the secretaries
+CREATE TABLE IF NOT EXISTS billings (
     billingID INT AUTO_INCREMENT PRIMARY KEY,
-    orderID INT NOT NULL,
+    orderID INT NOT NULL UNIQUE,  -- Each order should have only one billing
     billedAmount INT NOT NULL,
-    paymentStatus VARCHAR(255) NOT NULL,
-    insuranceClaimStatus VARCHAR(255) NOT NULL,
-    FOREIGN KEY (orderID) REFERENCES orders(orderID)
+    paymentStatus BOOLEAN NOT NULL,
+    insuranceClaimStatus BOOLEAN NOT NULL,
+    FOREIGN KEY (orderID) REFERENCES orders(orderID) ON DELETE CASCADE
 );
 
--- Create the dynamic user-role mapping structure
-
--- Users table
-CREATE TABLE IF NOT EXISTS users (
-    userID INT AUTO_INCREMENT PRIMARY KEY,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL
+CREATE TABLE IF NOT EXISTS acceptedInsurances (
+    insuranceID INT AUTO_INCREMENT PRIMARY KEY,
+    insuranceType VARCHAR(255) NOT NULL UNIQUE,
+    discountRate FLOAT NOT NULL, 
+    -- Discount rate for the insuranceType should be between 0 and 1
+    CHECK (discountRate >= 0 AND discountRate <= 1)
 );
 
--- Roles table
-CREATE TABLE IF NOT EXISTS roles (
-    roleID INT AUTO_INCREMENT PRIMARY KEY,
-    roleName VARCHAR(255) NOT NULL UNIQUE
-);
+-- VIEWS:
+-- Create a view to display order of a patient
+CREATE VIEW patientOrders AS
+SELECT patients.patientID, orders.orderID,
+       testCatalogs.testName,
+       staffs.firstName AS labStaffFirstName, staffs.lastName AS labStaffLastName,
+       orders.orderDate, appointments.appointmentDateTime, orders.orderStatus
+FROM orders
+JOIN patients ON orders.patientID = patients.patientID
+JOIN testCatalogs ON orders.testID = testCatalogs.testID
+JOIN staffs ON orders.labStaffOrderID = staffs.staffID
+LEFT JOIN appointments ON orders.orderID = appointments.orderID;
 
--- User-Role mapping table
-CREATE TABLE IF NOT EXISTS user_roles (
-    userID INT NOT NULL,
-    roleID INT NOT NULL,
-    FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE,
-    FOREIGN KEY (roleID) REFERENCES roles(roleID) ON DELETE CASCADE,
-    PRIMARY KEY (userID, roleID)
-);
+-- Create a view to display the results of a patient
+CREATE VIEW patientResults AS
+SELECT patients.patientID, orders.orderID,
+       testCatalogs.testName,
+       staffs.firstName AS labStaffFirstName, staffs.lastName AS labStaffLastName,
+       results.reportURL, results.interpretation
+FROM orders
+JOIN patients ON orders.patientID = patients.patientID
+JOIN testCatalogs ON orders.testID = testCatalogs.testID
+JOIN results ON orders.orderID = results.orderID
+JOIN staffs ON results.labStaffResultID = staffs.staffID;
 
--- Populate roles
-INSERT INTO roles (roleName) VALUES ('labStaff'), ('secretary'), ('patient');
+-- Create a view to display the billings of a patient
+CREATE VIEW patientBillings AS
+SELECT patients.patientID, orders.orderID, testCatalogs.testName,
+       billings.billedAmount, billings.insuranceClaimStatus, billings.paymentStatus
+FROM orders
+JOIN testCatalogs ON orders.testID = testCatalogs.testID
+JOIN billings ON orders.orderID = billings.orderID
+JOIN patients ON orders.patientID = patients.patientID;
 
+-- Create a view to display the orders of a lab staff
+CREATE VIEW labStaffOrders AS
+SELECT staffs.staffID AS labStaffID, orders.orderID, testCatalogs.testName,
+       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
+       orders.orderDate, orders.orderStatus
+FROM orders
+JOIN staffs ON orders.labStaffOrderID = staffs.staffID
+JOIN testCatalogs ON orders.testID = testCatalogs.testID
+JOIN patients ON orders.patientID = patients.patientID;
+
+-- Create a view to display the results of a lab staff
+CREATE VIEW labStaffResults AS
+SELECT staffs.staffID AS labStaffID, orders.orderID, testCatalogs.testName,
+       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
+       results.reportURL, results.interpretation
+FROM orders
+JOIN staffs ON orders.labStaffOrderID = staffs.staffID
+JOIN testCatalogs ON orders.testID = testCatalogs.testID
+JOIN results ON orders.orderID = results.orderID
+JOIN patients ON orders.patientID = patients.patientID;
+
+-- Create a view to display the appointments of a secretary
+CREATE VIEW secretaryAppointments AS
+SELECT orders.orderID,
+       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
+       staffs.firstName AS secretaryFirstName, staffs.lastName AS secretaryLastName,
+       appointments.appointmentDateTime
+FROM orders
+JOIN patients ON orders.patientID = patients.patientID
+LEFT JOIN appointments ON orders.orderID = appointments.orderID
+LEFT JOIN staffs ON appointments.secretaryID = staffs.staffID;
+
+-- Create a view to display the billings of a secretary
+CREATE VIEW secretaryBillings AS
+SELECT orders.orderID,
+       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
+       billings.billedAmount, billings.insuranceClaimStatus, billings.paymentStatus
+FROM orders
+JOIN patients ON orders.patientID = patients.patientID
+JOIN billings ON orders.orderID = billings.orderID;
+
+-- Create a view to display the results of a secretary
+CREATE VIEW secretaryResults AS
+SELECT orders.orderID,
+       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
+       results.reportURL
+FROM orders
+JOIN patients ON orders.patientID = patients.patientID
+JOIN results ON orders.orderID = results.orderID;
+
+
+ -- TRIGGERS:
+-- Create a trigger to update the orderStatus of an order when an appointment is created, change the orderStatus to 'Pending Result'
 DELIMITER $$
-
-CREATE TRIGGER before_insert_patients
-BEFORE INSERT ON patients
+CREATE TRIGGER updateOrderStatusCreateAppointment
+AFTER INSERT ON appointments
 FOR EACH ROW
 BEGIN
-    DECLARE user_id INT;
+    UPDATE orders
+    SET orderStatus = 'Pending Result'
+    WHERE orderID = NEW.orderID;
+END $$
+DELIMITER ;
+
+-- Create a trigger to update the orderStatus of an order when an appointment is deleted, change the orderStatus to 'Pending Appointment'
+DELIMITER $$
+CREATE TRIGGER updateOrderStatusDeleteAppointment
+AFTER DELETE ON appointments
+FOR EACH ROW
+BEGIN
+    UPDATE orders
+    SET orderStatus = 'Pending Appointment'
+    WHERE orderID = OLD.orderID;
+END $$
+DELIMITER ;
+
+-- Create a trigger to update the orderStatus of an order when a test result is created, change the orderStatus to 'Completed'
+DELIMITER $$
+CREATE TRIGGER updateOrderStatusCreateResult
+AFTER INSERT ON results
+FOR EACH ROW
+BEGIN
+    UPDATE orders
+    SET orderStatus = 'Completed'
+    WHERE orderID = NEW.orderID;
+END $$
+DELIMITER ;
+
+-- Create a trigger to update the orderStatus of an order when a test result is deleted, change the orderStatus to 'Pending Result'
+DELIMITER $$
+CREATE TRIGGER updateOrderStatusDeleteResult
+AFTER DELETE ON results
+FOR EACH ROW
+BEGIN
+    UPDATE orders
+    SET orderStatus = 'Pending Result'
+    WHERE orderID = OLD.orderID;
+END $$
+DELIMITER ;
+
+-- Create a trigger to check the orderStatus before inserting a test result
+DELIMITER $$
+CREATE TRIGGER checkOrderStatusBeforeInsertTestResult
+BEFORE INSERT ON results
+FOR EACH ROW
+BEGIN
+    DECLARE currentStatus ENUM('Pending Appointment', 'Pending Result', 'Completed');
+
+    -- Retrieve the current orderStatus
+    SELECT orderStatus INTO currentStatus
+    FROM orders
+    WHERE orderID = NEW.orderID;
+
+    -- Check if the orderStatus is 'Pending Result'
+    IF currentStatus != 'Pending Result' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot insert test result: Order status is not "Pending Result".';
+    END IF;
+END $$
+DELIMITER ;
+
+-- Create a trigger to insert a row into the billings table when an order is created
+DELIMITER $$
+CREATE TRIGGER insertBillingCreateOrder
+AFTER INSERT ON orders
+FOR EACH ROW
+BEGIN
+    -- Determine discountRate and insuranceClaimStatus
+    SET @discountRate = (
+        SELECT discountRate
+        FROM acceptedInsurances
+        WHERE insuranceType = (SELECT insuranceType FROM patients WHERE patientID = NEW.patientID)
+    );
+    
+    IF @discountRate IS NULL THEN
+        SET @insuranceClaimStatus = FALSE;
+        SET @discountRate = 0;
+    ELSE
+        SET @insuranceClaimStatus = TRUE;
+    END IF;
+
+    -- Calculate billedAmount
+    SET @billedAmount = (
+        SELECT testCost FROM testCatalogs WHERE testID = NEW.testID
+    ) * (1 - @discountRate);
+
+    -- If the @billedAmount is 0, then make paymentStatus as TRUE
+    SET @paymentStatus = @billedAmount = 0;
+
+    -- Insert into billings table
+    INSERT INTO billings (orderID, billedAmount, paymentStatus, insuranceClaimStatus)
+    VALUES (NEW.orderID, @billedAmount, @paymentStatus, @insuranceClaimStatus);
+END $$
+DELIMITER ;
+
+-- PROCEDURES:
+-- Create a procedure to insert a new patient 
+DELIMITER $$
+CREATE PROCEDURE insertPatient(
+    IN email VARCHAR(255),
+    IN encrypted_password VARBINARY(255),
+    IN iv VARBINARY(16),
+    IN firstName VARCHAR(255),
+    IN lastName VARCHAR(255),
+    IN birthDate DATE,
+    IN phoneNo VARCHAR(255),
+    IN insuranceType VARCHAR(255),
+    IN roleName VARCHAR(255)
+)
+BEGIN    
+    -- Get the roleID of the roleName
+    SET @roleID = (SELECT roleID FROM roles WHERE roles.roleName = roleName);
 
     -- Insert into the users table
-    INSERT INTO users (email, password) 
-    VALUES (NEW.email, NEW.password);
+    INSERT INTO users (email, password, iv)
+    VALUES (email, encrypted_password, iv);
 
-    -- Get the inserted userID
-    SET user_id = LAST_INSERT_ID();
+    -- Get the userID of the newly inserted user
+    SET @newUserID = LAST_INSERT_ID();
 
     -- Map the user to the patient role
-    INSERT INTO user_roles (userID, roleID)
-    VALUES (user_id, (SELECT roleID FROM roles WHERE roleName = 'patient'));
-
-    -- If any step fails, rollback will automatically prevent adding the row to patients
-END$$
-
+    INSERT INTO userRoles (userID, roleID)
+    VALUES (@newUserID, @roleID);
+    
+    -- Insert into the patients table
+    INSERT INTO patients (patientID, firstName, lastName, birthDate, phoneNo, insuranceType)
+    VALUES (@newUserID, firstName, lastName, birthDate, phoneNo, insuranceType);
+END $$
 DELIMITER ;
 
+-- Create a procedure to insert a new staff
 DELIMITER $$
-
-CREATE TRIGGER before_insert_staffs_lab
-BEFORE INSERT ON staffs
-FOR EACH ROW
+CREATE PROCEDURE insertStaff(
+    IN email VARCHAR(255),
+    IN encrypted_password VARBINARY(255),
+    IN iv VARBINARY(16),
+    IN firstName VARCHAR(255),
+    IN lastName VARCHAR(255),
+    IN phoneNo VARCHAR(255),
+    IN roleName VARCHAR(255)
+)
 BEGIN
-    DECLARE user_id INT;
+    -- Get the roleID of the roleName
+    SET @roleID = (SELECT roleID FROM roles WHERE roles.roleName = roleName);
 
     -- Insert into the users table
-    INSERT INTO users (email, password) 
-    VALUES (NEW.email, NEW.password);
+    INSERT INTO users (email, password, iv)
+    VALUES (email, encrypted_password, iv);
 
-    -- Get the inserted userID
-    SET user_id = LAST_INSERT_ID();
+    -- Get the userID of the newly inserted user
+    SET @newUserID = LAST_INSERT_ID();
 
-    -- Assign role based on the staff role
-    IF NEW.role = 'labStaff' THEN
-        INSERT INTO user_roles (userID, roleID)
-        VALUES (user_id, (SELECT roleID FROM roles WHERE roleName = 'labStaff'));
-    ELSEIF NEW.role = 'secretary' THEN
-        INSERT INTO user_roles (userID, roleID)
-        VALUES (user_id, (SELECT roleID FROM roles WHERE roleName = 'secretary'));
-    ELSE
-        -- Raise an error for an invalid role
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Invalid role provided for staff';
-    END IF;
+    -- Map the user to the staff role
+    INSERT INTO userRoles (userID, roleID)
+    VALUES (@newUserID, @roleID);
 
-    -- If any step fails, rollback will automatically prevent adding the row to staffs
-END$$
-
+    -- Insert into the staffs table
+    INSERT INTO staffs (staffID, firstName, lastName, phoneNo, staffRole)
+    VALUES (@newUserID, firstName, lastName, phoneNo, roleName);
+END $$
 DELIMITER ;
 
+
+-- ROLES:
 -- Create roles at the database level
-CREATE ROLE labStaff;
-CREATE ROLE secretary;
-CREATE ROLE patient;
+CREATE USER 'patient'@'%' IDENTIFIED BY '123456'; -- Patient
+CREATE USER 'labStaff'@'%' IDENTIFIED BY '123456';     -- Lab Staff
+CREATE USER 'secretary'@'%' IDENTIFIED BY '123456'; -- Secretary
 
--- Grant privileges to roles
+-- Assign privileges to roles
+-- patient
+GRANT SELECT, UPDATE ON comp3335_database.patients TO patient;  -- if they can change their information
+GRANT SELECT ON comp3335_database.patientOrders TO patient;
+GRANT SELECT ON comp3335_database.patientResults TO patient;
+GRANT SELECT ON comp3335_database.patientBillings TO patient;
 
--- labStaff can read/write to testResults table and read orders
-GRANT SELECT, INSERT, UPDATE ON comp3335_database.testResults TO labStaff;
-GRANT SELECT ON comp3335_database.orders TO labStaff;
 
--- secretary can read/write to appointments table, read orders, and read/write to billing table
-GRANT SELECT, INSERT, UPDATE ON comp3335_database.appointments TO secretary;
+-- labStaff
+GRANT SELECT, UPDATE ON comp3335_database.orders TO labStaff;  -- if they can change their information
+GRANT SELECT ON comp3335_database.labStaffOrders TO labStaff;
+GRANT SELECT ON comp3335_database.labStaffResults TO labStaff;
+GRANT SELECT ON comp3335_database.testCatalogs TO labStaff;  -- they can view the test catalog to create order
+GRANT SELECT, INSERT, UPDATE ON comp3335_database.orders TO labStaff;
+GRANT SELECT, INSERT, UPDATE ON comp3335_database.results TO labStaff;
+
+
+-- secretary
+GRANT SELECT, UPDATE ON comp3335_database.orders TO secretary;  -- if they can change their information
+GRANT SELECT ON comp3335_database.secretaryAppointments TO secretary;
+GRANT SELECT ON comp3335_database.secretaryBillings TO secretary;
+GRANT SELECT ON comp3335_database.secretaryResults TO secretary;
 GRANT SELECT ON comp3335_database.orders TO secretary;
-GRANT SELECT, INSERT, UPDATE ON comp3335_database.billing TO secretary;
-
--- patient can read appointments, testResults, orders, and billing
-GRANT SELECT ON comp3335_database.appointments TO patient;
-GRANT SELECT ON comp3335_database.testResults TO patient;
-GRANT SELECT ON comp3335_database.orders TO patient;
-GRANT SELECT ON comp3335_database.billing TO patient;
-
--- Create stored procedure for assigning roles dynamically
-DELIMITER $$
-
-CREATE PROCEDURE AssignUserRole(IN username VARCHAR(255))
-BEGIN
-    DECLARE roleName VARCHAR(255);
-
-    -- Get the roleName for the user
-    SELECT r.roleName 
-    INTO roleName
-    FROM users u
-    JOIN user_roles ur ON u.userID = ur.userID
-    JOIN roles r ON ur.roleID = r.roleID
-    WHERE u.username = username;
-
-    -- Dynamically set privileges based on the roleName
-    IF roleName = 'labStaff' THEN
-        SET ROLE labStaff;
-    ELSEIF roleName = 'secretary' THEN
-        SET ROLE secretary;
-    ELSEIF roleName = 'patient' THEN
-        SET ROLE patient;
-    END IF;
-END$$
-
-DELIMITER ;
-
-INSERT INTO patients (name, surname, birthdate, phoneNo, email, password, insuranceType) 
-VALUES ('Alice', 'Chan', '1990-01-01', '12345678', 'alice@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'AIA'),
-       ('Bob', 'Lee', '1991-02-02', '87654321', 'bob@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'AXA'),
-       ('Charlie', 'Wong', '1992-03-03', '12345678', 'charlie@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'Prudential');
-
-INSERT INTO staffs (name, surname, phoneNo, email, password, role)
-VALUES ('David', 'Chan', '12345678', 'david@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'labStaff'),
-       ('Eva', 'Lee', '87654321', 'eva@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'secretary'),
-       ('Frank', 'Wong', '12345678', 'frank@gmail.com', '$argon2id$v=19$m=65536,t=4,p=1$alVCanFaZmFlcVpKdzZseA$VpUsbrMKTzTUJvsujzQzGEa0GkKz5SDrwJCmUmH9nUg', 'labStaff');
-
-INSERT INTO testCatalogs (testName, cost, testDescription) 
-VALUES ('Blood Test', 100, 'Test for blood'),
-       ('Urine Test', 200, 'Test for urine'),
-       ('X-ray', 300, 'X-ray test');
-
-INSERT INTO orders (patientID, testCode, orderDate, orderStatus) 
-VALUES (1, 1, '2021-01-01', 'Pending'),
-       (2, 2, '2021-02-02', 'Completed'),
-       (3, 3, '2021-03-03', 'Pending');
-
-INSERT INTO appointments (patientID, orderID, secretaryID, appointmentDate, appointmentTime) 
-VALUES (1, 1, 1, '2021-01-02', '10:00:00'),
-       (2, 2, 2, '2021-02-03', '11:00:00'),
-       (3, 3, 3, '2021-03-04', '12:00:00');
-
-INSERT INTO testResults (orderID, reportURL, interpretation, labStaffID)
-VALUES (1, 'http://example.com/report1', 'Normal', 1),
-       (2, 'http://example.com/report2', 'Abnormal', 2),
-       (3, 'http://example.com/report3', 'Normal', 3);
-
-INSERT INTO billing (orderID, billedAmount, paymentStatus, insuranceClaimStatus)
-VALUES (1, 100, 'Paid', 'Claimed'),
-       (2, 200, 'Unpaid', 'Not Claimed'),
-       (3, 300, 'Paid', 'Claimed');
+GRANT SELECT, INSERT, UPDATE ON comp3335_database.appointments TO secretary;
+GRANT SELECT, UPDATE ON comp3335_database.billings TO secretary;

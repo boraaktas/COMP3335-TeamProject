@@ -17,40 +17,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $authResponse = authenticateUser($email, $password);
 
         if ($authResponse['status']) {
-            // Regenerate session ID to prevent session fixation
+            // Regenerate session ID to prevent session fixation attacks
             session_regenerate_id(true);
 
             // Store session details
             $_SESSION['userID'] = $authResponse['userID'];
             $_SESSION['email'] = $email;
             $_SESSION['role'] = $authResponse['role'];
+            $_SESSION['userName'] = $authResponse['userName'];
             $_SESSION['isLoggedIn'] = true;
 
-            // Map roles to dashboards
-            $dashboards = [
-                'patient' => 'dashboard_patient.php',
-                'labStaff' => 'dashboard_labstaff.php',
-                'secretary' => 'dashboard_secretary.php',
+            // Map roles to welcomes
+            $pages = [
+                'patient' => 'welcome_patient.php',
+                'labStaff' => 'welcome_labstaff.php',
+                'secretary' => 'welcome_secretary.php',
             ];
 
-            // Redirect to the appropriate dashboard
-            if (array_key_exists($authResponse['role'], $dashboards)) {
-                header("Location: " . $dashboards[$authResponse['role']]);
+            // Redirect to the appropriate page
+            if (array_key_exists($authResponse['role'], $pages)) {
+                header("Location: " . $pages[$authResponse['role']]);
                 exit;
+
             } else {
                 header("Location: index.html?error=Unauthorized%20role.");
                 exit;
             }
+            
         } else {
             // Invalid credentials
             header("Location: index.html?error=" . urlencode($authResponse['message']));
             exit;
         }
+
     } catch (Exception $e) {
         // Handle database or server errors
         header("Location: index.html?error=An%20unexpected%20error%20occurred.");
         exit;
     }
+
 } else {
     // If not a POST request, redirect to login page
     header("Location: index.html");

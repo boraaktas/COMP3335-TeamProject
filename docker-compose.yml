@@ -2,37 +2,33 @@ version: '3.3'
 
 services:
   web:
-    image: php:8.3-apache
     container_name: COMP3335_web
     build: ./php
     depends_on:
       - percona
-    environment:
-      - MYSQL_HOST=mysql
+    env_file:
+      - .env
     volumes:
       - ./src:/var/www/html
     ports:
-      -  "80:80"
-  
+      - "80:80"
+
   percona:
     image: percona:8.0
     platform: linux/amd64
     container_name: COMP3335_db
     build: ./percona
-    environment:
-      MYSQL_ROOT_PASSWORD: mypassword
+    env_file:
+      - .env
     volumes:
       - ./percona/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./percona/conf.d:/etc/mysql/conf.d
     ports:
       - "3306:3306"
-  
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: COMP3335_phpmyadmin
-    environment:
-      PMA_HOST: percona
-      PMA_USER: root
-      PMA_PASSWORD: mypassword
+    env_file:
+      - .env
     ports:
       - "8081:80"

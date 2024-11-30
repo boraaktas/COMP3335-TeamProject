@@ -1,80 +1,142 @@
 <?php
-/*
-function getDatabaseCredentials($role) {
-    $credentials = [
-        'root' => [
-            'host' => 'percona',
-            'username' => 'root',
-            'password' => 'mypassword',
-            'dbname' => 'comp3335_database'
-        ],
-        'lab_staff' => [
-            'host' => 'percona',
-            'username' => 'root',
-            'password' => 'mypassword',
-            'dbname' => 'comp3335_database'
+
+// Function to establish a database connection with the given role
+function getConnection($role) {
+    
+    $dbCredentials = [
+        'admin' => [
+            'host' => getenv('DB_HOST'),
+            'username' => getenv('DB_ADMIN'),
+            'password' => getenv('DB_ADMIN_PASSWORD')
         ],
         'patient' => [
-            'host' => 'percona',
-            'username' => 'root',
-            'password' => 'mypassword',
-            'dbname' => 'comp3335_database'
+            'host' => getenv('DB_HOST'),
+            'username' => getenv('DB_PATIENT'),
+            'password' => getenv('DB_PATIENT_PASSWORD')
+        ],
+        'labStaff' => [
+            'host' => getenv('DB_HOST'),
+            'username' => getenv('DB_LABSTAFF'),
+            'password' => getenv('DB_LABSTAFF_PASSWORD')
         ],
         'secretary' => [
-            'host' => 'percona',
-            'username' => 'root',
-            'password' => 'mypassword',
-            'dbname' => 'comp3335_database'
+            'host' => getenv('DB_HOST'),
+            'username' => getenv('DB_SECRETARY'),
+            'password' => getenv('DB_SECRETARY_PASSWORD')
         ]
     ];
 
-    return $credentials[$role] ?? $credentials['root'];
-}
-
-*/
-
-// Database connection parameters
-$host = "percona";
-$dbname = "comp3335_database";
-$dbuser = "root";
-$dbpass = "mypassword";
-
-// Function to establish a database connection
-function getConnection() {
-    $conn = new mysqli($GLOBALS['host'], $GLOBALS['dbuser'], $GLOBALS['dbpass'], $GLOBALS['dbname']);
-
-    // Check connection
-    if ($conn->connect_error) {
-        throw new Exception("Database connection failed: " . $conn->connect_error);
+    // Check if the role exists in the dictionary
+    if (!array_key_exists($role, $dbCredentials)) {
+        throw new Exception("Role not found.");
     }
+
+    // Create a new connection
+    $conn = new mysqli(
+        $dbCredentials[$role]['host'],
+        $dbCredentials[$role]['username'],
+        $dbCredentials[$role]['password'],
+        'comp3335_database'
+    );
 
     return $conn;
 }
 
-// Function to authenticate user
-function authenticateUser($email, $password) {
-    $conn = getConnection();
+function queryDatabase($role, $sql, $params) {
 
-    // Query to fetch user credentials
-    $sql = "SELECT u.userID, u.password, r.roleName 
-            FROM users u 
-            JOIN user_roles ur ON u.userID = ur.userID 
-            JOIN roles r ON ur.roleID = r.roleID 
-            WHERE u.email = ?";
+    // Get the database connection with the given role
+    $conn = getConnection($role);
+
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $email);
+    // if there are parameters to bind length of params bigger than 0
+    if (count($params['values']) > 0) {
+        $stmt->bind_param($params['types'], ...$params['values']);
+    }
     $stmt->execute();
+
     $result = $stmt->get_result();
 
+    $stmt->close();
+    $conn->close();
+
+    return $result;
+}
+
+function get_user_role_firstName_lastName($userID) {
+    // Query to fetch user role
+    $sql = "SELECT roles.roleName
+            FROM userRoles JOIN roles ON userRoles.roleID = roles.roleID
+            WHERE userRoles.userID = ?";
+
+    $result = queryDatabase('admin', $sql, ['types' => 'i', 'values' => [$userID]]);
+
+    if ($result->num_rows !== 1) {
+        throw new Exception("User not found.");
+    }
+
+    $role = $result->fetch_assoc()['roleName'];
+
+    $userTable = ($role === 'labStaff' || $role === 'secretary') ? 'staffs' : 'patients';
+    $IDName = ($role === 'labStaff' || $role === 'secretary') ? 'staffID' : 'patientID';
+
+    $sql = "SELECT firstName, lastName
+            FROM $userTable
+            WHERE $IDName = ?";
+    $result = queryDatabase('admin', $sql, ['types' => 'i', 'values' => [$userID]]);
+
+    if ($result->num_rows !== 1) {
+        throw new Exception("User not found.");
+    }
+
+    $user = $result->fetch_assoc();
+
+    return [
+        'role' => $role,
+        'firstName' => $user['firstName'],
+        'lastName' => $user['lastName']
+    ];
+
+}
+
+// Function to authenticate user
+function authenticateUser($email, $password) {
+
+    // Query to fetch user credentials
+    $sql = "SELECT *
+            FROM users
+            WHERE email = ?";
+
+    // Execute the query with the admin role
+    // it will be the only time we use the admin role, after this we will use the role of the user
+    $result = queryDatabase('admin', $sql, ['types' => 's', 'values' => [$email]]);
+
+    // Check if the user exists
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
 
-        // Verify the hashed password
-        if (password_verify($password, $user['password'])) {
+        $user_encrypted_password = $user['password']; // Encrypted password of the user
+        $user_iv = $user['iv']; // Initialization vector (IV) used for encryption
+
+        $encryption_key = getenv('ENCRYPTION_KEY'); // key for encryption
+        $cypher_method = getenv('CYPHER_METHOD'); // cypher method
+
+        // encryption of the given password using the user's IV
+        $given_password_encrypted = openssl_encrypt($password, $cypher_method, $encryption_key, OPENSSL_RAW_DATA, $user_iv);
+
+        // Check if the encrypted password matches the user's encrypted password
+        if ($given_password_encrypted === $user_encrypted_password) {
+            
+            // Get the user's role, first name, and last name
+            $user_info = get_user_role_firstName_lastName($user['userID']);
+            $role = $user_info['role'];
+            $firstName = $user_info['firstName'];
+            $lastName = $user_info['lastName'];
+            
             return [
                 'status' => true,
                 'userID' => $user['userID'],
-                'role' => $user['roleName']
+                'role' => $role,
+                'userName' => $firstName . ' ' . $lastName
             ];
         } else {
             return [

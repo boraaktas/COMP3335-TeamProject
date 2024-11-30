@@ -1,5 +1,3 @@
-version: '3.3'
-
 services:
   web:
     container_name: COMP3335_web
@@ -27,6 +25,7 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
+    platform: linux/amd64
     container_name: COMP3335_phpmyadmin
     env_file:
       - .env

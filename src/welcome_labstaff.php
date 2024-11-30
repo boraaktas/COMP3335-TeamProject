@@ -45,7 +45,7 @@ if (!isset($_SESSION['isLoggedIn']) || $_SESSION['role'] !== 'labStaff') {
 <body>
     <div class="container welcome-container">
         <div class="welcome-message">
-            <h1>Welcome, Name: <?php echo htmlspecialchars($_SESSION['userName']); ?></h1>
+            <h1>Welcome, <?php echo htmlspecialchars($_SESSION['userName']); ?></h1>
             <p>MedTestLab Lab Staff Page</p>
         </div>
         <div class="row justify-content-center">

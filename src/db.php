@@ -114,17 +114,8 @@ function authenticateUser($email, $password) {
     if ($result->num_rows === 1) {
         $user = $result->fetch_assoc();
 
-        $user_encrypted_password = $user['password']; // Encrypted password of the user
-        $user_iv = $user['iv']; // Initialization vector (IV) used for encryption
-
-        $encryption_key = getenv('ENCRYPTION_KEY'); // key for encryption
-        $cypher_method = getenv('CYPHER_METHOD'); // cypher method
-
-        // encryption of the given password using the user's IV
-        $given_password_encrypted = openssl_encrypt($password, $cypher_method, $encryption_key, OPENSSL_RAW_DATA, $user_iv);
-
-        // Check if the encrypted password matches the user's encrypted password
-        if ($given_password_encrypted === $user_encrypted_password) {
+        // Check if the b_crypt password matches the given password
+        if (password_verify($password, $user['password'])) {
             
             // Get the user's role, first name, and last name
             $user_info = get_user_role_firstName_lastName($user['userID']);

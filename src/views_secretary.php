@@ -19,9 +19,18 @@ $heading = "";
 
 // Define allowed tasks with corresponding titles and headings
 $allowed_tasks = [
-    'view_appointments' => ['title' => 'Appointments', 'heading' => 'Appointments'],
-    'view_billings'     => ['title' => 'Billings', 'heading' => 'Billings'],
-    'view_results'      => ['title' => 'Results', 'heading' => 'Test Results'],
+    'view_appointments' => ['title' => 'Appointments',
+                            'heading' => 'Appointments',
+                            'createButton' => 'Create Appointment',
+                            'create_url' => 'create_appointment.php',
+                            'updateButton' => 'Update Appointment',
+                            'update_url' => 'update_appointment.php'],
+    'view_billings'     => ['title' => 'Billings',
+                            'heading' => 'Billings',
+                            'updateButton' => 'Update Billing',
+                            'update_url' => 'update_billing.php'],
+    'view_results'      => ['title' => 'Results',
+                            'heading' => 'Test Results'],
 ];
 
 // Get the task input
@@ -34,6 +43,10 @@ if (!array_key_exists($task, $allowed_tasks)) {
     // Set the page title and heading based on the task
     $pageTitle = $allowed_tasks[$task]['title'];
     $heading = $allowed_tasks[$task]['heading'];
+    $createButton = $allowed_tasks[$task]['createButton'] ?? '';
+    $create_url = $allowed_tasks[$task]['create_url'] ?? '';
+    $updateButton = $allowed_tasks[$task]['updateButton'] ?? '';
+    $update_url = $allowed_tasks[$task]['update_url'] ?? '';
 
     // Prepare the SQL query based on the task
     $sql = "";
@@ -173,6 +186,12 @@ if (!array_key_exists($task, $allowed_tasks)) {
             <h2 class="mb-4"><?php echo htmlspecialchars($heading); ?></h2>
             <?php echo $tableOutput; ?>
             <a href="welcome_secretary.php" class="btn btn-secondary mt-3">Back</a>
+            <?php if (!empty($createButton)): ?>
+                <a href="<?php echo $create_url; ?>" class="btn btn-primary mt-3"><?php echo $createButton; ?></a>
+            <?php endif; ?>
+            <?php if (!empty($updateButton)): ?>
+                <a href="<?php echo $update_url; ?>" class="btn btn-warning mt-3"><?php echo $updateButton; ?></a>
+            <?php endif; ?>
             <a href="logout.php" class="btn btn-danger mt-3 logout-link">Logout</a>
         <?php endif; ?>
     </div>

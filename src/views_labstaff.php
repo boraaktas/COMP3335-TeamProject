@@ -19,8 +19,18 @@ $heading = "";
 
 // Define allowed tasks with corresponding titles and headings
 $allowed_tasks = [
-    'view_orders'   => ['title' => 'Test Orders', 'heading' => 'Test Orders'],
-    'view_results'  => ['title' => 'View Results', 'heading' => 'Test Results'],
+    'view_orders'   => ['title' => 'Test Orders',
+                        'heading' => 'Test Orders',
+                        'createButton' => 'Create Order',
+                        'create_url' => 'create_order.php',
+                        'updateButton' => 'Update Order',
+                        'update_url' => 'update_order.php'],
+    'view_results'  => ['title' => 'View Results',
+                        'heading' => 'Test Results',
+                        'createButton' => 'Create Result',
+                        'create_url' => 'create_result.php',
+                        'updateButton' => 'Update Result',
+                        'update_url' => 'update_result.php']
 ];
 
 // Get the task input
@@ -33,6 +43,10 @@ if (!array_key_exists($task, $allowed_tasks)) {
     // Set the page title and heading based on the task
     $pageTitle = $allowed_tasks[$task]['title'];
     $heading = $allowed_tasks[$task]['heading'];
+    $createButton = $allowed_tasks[$task]['createButton'];
+    $create_url = $allowed_tasks[$task]['create_url'];
+    $updateButton = $allowed_tasks[$task]['updateButton'];
+    $update_url = $allowed_tasks[$task]['update_url'];
 
     // Prepare the SQL query based on the task
     $sql = "";
@@ -153,6 +167,8 @@ if (!array_key_exists($task, $allowed_tasks)) {
             <h2 class="mb-4"><?php echo htmlspecialchars($heading); ?></h2>
             <?php echo $tableOutput; ?>
             <a href="welcome_labstaff.php" class="btn btn-secondary mt-3">Back</a>
+            <a href="<?php echo $create_url; ?>" class="btn btn-primary mt-3"><?php echo $createButton; ?></a>
+            <a href="<?php echo $update_url; ?>" class="btn btn-warning mt-3"><?php echo $updateButton; ?></a>
             <a href="logout.php" class="btn btn-danger mt-3 logout-link">Logout</a>
         <?php endif; ?>
     </div>

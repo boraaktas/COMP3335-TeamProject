@@ -6,8 +6,7 @@ USE comp3335_database;
 CREATE TABLE IF NOT EXISTS users (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
-    password VARBINARY(255) NOT NULL,
-    iv VARBINARY(16) NOT NULL
+    password VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS roles (
@@ -310,8 +309,7 @@ DELIMITER ;
 DELIMITER $$
 CREATE PROCEDURE insertPatient(
     IN email VARCHAR(255),
-    IN encrypted_password VARBINARY(255),
-    IN iv VARBINARY(16),
+    IN b_crypted_password VARCHAR(255),
     IN firstName VARCHAR(255),
     IN lastName VARCHAR(255),
     IN birthDate DATE,
@@ -324,8 +322,8 @@ BEGIN
     SET @roleID = (SELECT roleID FROM roles WHERE roles.roleName = roleName);
 
     -- Insert into the users table
-    INSERT INTO users (email, password, iv)
-    VALUES (email, encrypted_password, iv);
+    INSERT INTO users (email, password)
+    VALUES (email, b_crypted_password);
 
     -- Get the userID of the newly inserted user
     SET @newUserID = LAST_INSERT_ID();
@@ -344,8 +342,7 @@ DELIMITER ;
 DELIMITER $$
 CREATE PROCEDURE insertStaff(
     IN email VARCHAR(255),
-    IN encrypted_password VARBINARY(255),
-    IN iv VARBINARY(16),
+    IN b_crypted_password VARCHAR(255),
     IN firstName VARCHAR(255),
     IN lastName VARCHAR(255),
     IN phoneNo VARCHAR(255),
@@ -356,8 +353,8 @@ BEGIN
     SET @roleID = (SELECT roleID FROM roles WHERE roles.roleName = roleName);
 
     -- Insert into the users table
-    INSERT INTO users (email, password, iv)
-    VALUES (email, encrypted_password, iv);
+    INSERT INTO users (email, password)
+    VALUES (email, b_crypted_password);
 
     -- Get the userID of the newly inserted user
     SET @newUserID = LAST_INSERT_ID();
@@ -391,7 +388,8 @@ GRANT SELECT ON comp3335_database.patientBillings TO patient;
 GRANT SELECT, UPDATE ON comp3335_database.orders TO labStaff;  -- if they can change their information
 GRANT SELECT ON comp3335_database.labStaffOrders TO labStaff;
 GRANT SELECT ON comp3335_database.labStaffResults TO labStaff;
-GRANT SELECT ON comp3335_database.testCatalogs TO labStaff;  -- they can view the test catalog to create order
+GRANT SELECT ON comp3335_database.patients TO labStaff;  -- they should see patient information to create order
+GRANT SELECT ON comp3335_database.testCatalogs TO labStaff;  -- they should see the test catalog to create order
 GRANT SELECT, INSERT, UPDATE ON comp3335_database.orders TO labStaff;
 GRANT SELECT, INSERT, UPDATE ON comp3335_database.results TO labStaff;
 

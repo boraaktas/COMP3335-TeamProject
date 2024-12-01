@@ -1,5 +1,6 @@
 services:
   web:
+    image: php:8.3-apache
     container_name: COMP3335_web
     build: ./php
     depends_on:
@@ -20,8 +21,70 @@ services:
       - .env
     volumes:
       - ./percona/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./percona/conf.d/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./percona/audit.log:/var/lib/mysql/audit.log  # Mount the audit log file
+      - mysql-data:/var/lib/mysql
     ports:
       - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "percona"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter
+    container_name: COMP3335_mysqld_exporter
+    depends_on:
+      percona:
+        condition: service_healthy
+    command:
+      - --config.my-cnf=/cfg/.my.cnf
+    volumes:
+      - ./mysqld-exporter/.my.cnf:/cfg/.my.cnf:ro
+    ports:
+      - "9104:9104"
+
+  prometheus:
+    image: prom/prometheus
+    container_name: COMP3335_prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    container_name: COMP3335_grafana
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+  loki:
+    image: grafana/loki
+    container_name: COMP3335_loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  promtail:
+    image: grafana/promtail
+    container_name: COMP3335_promtail
+    volumes:
+      - ./loki/promtail-config.yml:/etc/promtail/config.yml
+      - ./loki/positions:/etc/promtail/positions
+      - ./percona/audit.log:/var/lib/mysql/audit.log
+    depends_on:
+      - loki
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -31,3 +94,7 @@ services:
       - .env
     ports:
       - "8081:80"
+
+volumes:
+  mysql-data:    # Declare MySQL data
+  grafana-data:  # Declare Grafana data

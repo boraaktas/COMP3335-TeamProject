@@ -402,3 +402,8 @@ GRANT SELECT ON comp3335_database.secretaryResults TO secretary;
 GRANT SELECT ON comp3335_database.orders TO secretary;
 GRANT SELECT, INSERT, UPDATE ON comp3335_database.appointments TO secretary;
 GRANT SELECT, UPDATE ON comp3335_database.billings TO secretary;
+
+-- exporter user for MySQL metrics collection by mysqld-exporter
+CREATE USER IF NOT EXISTS 'exporter'@'%' IDENTIFIED BY 'exporterpassword';
+GRANT PROCESS, REPLICATION CLIENT ON *.* TO 'exporter'@'%';
+FLUSH PRIVILEGES;

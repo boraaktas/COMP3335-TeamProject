@@ -1,0 +1,15 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+positions:
+  filename: /etc/promtail/positions/positions.yaml
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+scrape_configs:
+  - job_name: audit_logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: mysql_audit_logs
+          __path__: /var/lib/mysql/audit.log

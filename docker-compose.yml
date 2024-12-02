@@ -22,7 +22,6 @@ services:
     volumes:
       - ./percona/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./percona/conf.d/my.cnf:/etc/mysql/conf.d/my.cnf
-      # - ./percona/audit.log:/var/lib/mysql/audit.log  # Mount the audit log file
       - mysql-data:/var/lib/mysql
     ports:
       - "3306:3306"
@@ -82,7 +81,7 @@ services:
     volumes:
       - ./loki/promtail-config.yml:/etc/promtail/config.yml
       - ./loki/positions:/etc/promtail/positions
-      - ./percona/audit.log:/var/lib/mysql/audit.log
+      - mysql-data:/var/lib/mysql
     depends_on:
       - loki
 

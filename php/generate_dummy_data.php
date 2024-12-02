@@ -481,8 +481,7 @@ function main(): void {
     // If there is a data in the database, do no generate dummy data
     $result = $conn->query("SELECT * FROM users");
     if ($result->num_rows > 0) {
-        echo "Data already exists in the database. Aborting script.\n";
-        exit(1);
+        echo "Data already exists in the database. Skipping dummy data generation.\n";
     }
 
     else {

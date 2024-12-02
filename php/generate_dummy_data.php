@@ -1,19 +1,19 @@
 <?php
 // generate_dummy_data.php
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+ini_set(option: 'display_errors', value: 1);
+ini_set(option: 'display_startup_errors', value: 1);
+error_reporting(error_level: E_ALL);
 
 // Function to generate hashed password and IV
-function generate_b_crypted_password($password) {
+function generate_b_crypted_password($password): string {
 
-    $b_crypted_password = password_hash($password, PASSWORD_BCRYPT);
+    $b_crypted_password = password_hash(password: $password, algo: PASSWORD_BCRYPT);
 
     return $b_crypted_password;
 }
 
-function find_user_id_by_email($conn, $email) {
+function find_user_id_by_email($conn, $email): mixed {
     $stmt = $conn->prepare("SELECT userID FROM users WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -29,23 +29,24 @@ function find_user_id_by_email($conn, $email) {
     }
 }
 
-function find_testID_by_testCode($conn, $testCode) {
+function find_testID_by_testCode($conn, $testCode): mixed {
     $stmt = $conn->prepare("SELECT testID FROM testCatalogs WHERE testCode = ?");
     $stmt->bind_param("i", $testCode);
     $stmt->execute();
     $result = $stmt->get_result();
     $stmt->close();
 
-    if ($result->num_rows == 1) {
-        return $result->fetch_assoc()['testID'];
-    } else {
-        echo "Test not found with testCode: $testCode\n";
-        echo "Aborting script.\n";
-        exit(1);
+    switch ($result->num_rows) {
+        case 1:
+            return $result->fetch_assoc()['testID'];
+        default:
+            echo "Test not found with testCode: $testCode\n";
+            echo "Aborting script.\n";
+            exit(1);
     }
 }
 
-function find_orderID_by_patientEmail_and_testCode($conn, $patientEmail, $testCode) {
+function find_orderID_by_patientEmail_and_testCode($conn, $patientEmail, $testCode): mixed {
     $stmt = $conn->prepare("SELECT orders.orderID FROM orders
         JOIN users ON orders.patientID = users.userID
         JOIN testCatalogs ON orders.testID = testCatalogs.testID
@@ -55,16 +56,18 @@ function find_orderID_by_patientEmail_and_testCode($conn, $patientEmail, $testCo
     $result = $stmt->get_result();
     $stmt->close();
 
-    if ($result->num_rows == 1) {
-        return $result->fetch_assoc()['orderID'];
-    } else {
-        echo "Order not found with patientEmail: $patientEmail and testCode: $testCode\n";
-        echo "Aborting script.\n";
-        exit(1);
+    switch ($result->num_rows) {
+        case 1:
+            return $result->fetch_assoc()['orderID'];
+        default:
+            echo "Order not found with patientEmail: $patientEmail and testCode: $testCode\n";
+            echo "Aborting script.\n";
+            exit(1);
     }
+
 }
 
-function generate_users_data($conn) {
+function generate_users_data($conn): void {
 
     // Prepare users data
     $users = [
@@ -141,7 +144,7 @@ function generate_users_data($conn) {
     // Insert users using stored procedures
     foreach ($users as $userData) {
         try {
-            $b_crypted_password = generate_b_crypted_password($userData['password']);
+            $b_crypted_password = generate_b_crypted_password(password: $userData['password']);
 
             if ($userData['role'] === 'patient') {
                 $stmt = $conn->prepare("CALL insertPatient(?, ?, ?, ?, ?, ?, ?, ?)");
@@ -171,7 +174,7 @@ function generate_users_data($conn) {
                 $stmt->close();
             } 
             else {
-                throw new Exception("Invalid user role.");
+                throw new Exception(message: "Invalid user role.");
             }
             echo "User inserted successfully.\n";
 
@@ -185,7 +188,7 @@ function generate_users_data($conn) {
     echo "All users inserted successfully.\n";
 }
 
-function generate_testCatalogs_data($conn) {
+function generate_testCatalogs_data($conn): void {
 
     // Prepare test catalog data
     $testCatalog = [
@@ -269,7 +272,7 @@ function generate_testCatalogs_data($conn) {
     echo "All tests inserted successfully.\n";
 }
 
-function generate_acceptedInsurances_data($conn) {
+function generate_acceptedInsurances_data($conn): void {
 
     // Prepare accepted insurance data
     $acceptedInsurance = [
@@ -310,7 +313,7 @@ function generate_acceptedInsurances_data($conn) {
     echo "All insurances inserted successfully.\n";
 }
 
-function generate_orders_data($conn) {
+function generate_orders_data($conn): void {
 
     // Prepare test orders data
     $testOrders = [
@@ -367,7 +370,7 @@ function generate_orders_data($conn) {
     echo "All test orders inserted successfully.\n";
 }
 
-function generate_appointments_data($conn) {
+function generate_appointments_data($conn): void { 
 
     // Prepare appointment data
     $appointments = [
@@ -408,7 +411,7 @@ function generate_appointments_data($conn) {
     echo "All appointments inserted successfully.\n";
 }
 
-function generate_results_data($conn) {
+function generate_results_data($conn): void {
 
     // Prepare results data
     $results = [
@@ -443,7 +446,7 @@ function generate_results_data($conn) {
     echo "All results inserted successfully.\n";
 }
 
-function main() {
+function main(): void {
     // get this from the environment variable
     $host = getenv('DB_HOST');
     $port = getenv('DB_PORT');
@@ -474,35 +477,44 @@ function main() {
         echo "Could not connect to the database after $maxRetries attempts.\n";
         exit(1);
     }
-    // Generate test catalog data
-    $testCatalog = generate_testCatalogs_data($conn);
-    echo "Test catalog inserted successfully.\n";
 
-    // Generate accepted insurances data
-    $acceptedInsurances = generate_acceptedInsurances_data($conn);
-    echo "Accepted insurances inserted successfully.\n";
+    // If there is a data in the database, do no generate dummy data
+    $result = $conn->query("SELECT * FROM users");
+    if ($result->num_rows > 0) {
+        echo "Data already exists in the database. Aborting script.\n";
+        exit(1);
+    }
 
-    // Generate users data
-    $users = generate_users_data($conn);
-    echo "Users inserted successfully.\n";
+    else {
+        // Generate test catalog data
+        generate_testCatalogs_data($conn);
+        echo "Test catalog inserted successfully.\n";
 
-    // Generate test orders data
-    $testOrders = generate_orders_data($conn);
-    echo "Test orders inserted successfully.\n";
+        // Generate accepted insurances data
+        generate_acceptedInsurances_data($conn);
+        echo "Accepted insurances inserted successfully.\n";
 
-    // Generate appointments data
-    $appointments = generate_appointments_data($conn);
-    echo "Appointments inserted successfully.\n";
+        // Generate users data
+        generate_users_data($conn);
+        echo "Users inserted successfully.\n";
 
-    // Generate results data
-    $results = generate_results_data($conn);
-    echo "Results inserted successfully.\n";
+        // Generate test orders data
+        generate_orders_data($conn);
+        echo "Test orders inserted successfully.\n";
 
-    // Close the database connection
-    $conn->close();
+        // Generate appointments data
+        generate_appointments_data($conn);
+        echo "Appointments inserted successfully.\n";
 
-    echo "All dummy data generated successfully.\n";
+        // Generate results data
+        generate_results_data($conn);
+        echo "Results inserted successfully.\n";
+
+        // Close the database connection
+        $conn->close();
+
+        echo "All dummy data generated successfully.\n";
+    }
 }
 
 main();
-?>

@@ -22,7 +22,7 @@ services:
     volumes:
       - ./percona/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./percona/conf.d/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./percona/audit.log:/var/lib/mysql/audit.log  # Mount the audit log file
+      # - ./percona/audit.log:/var/lib/mysql/audit.log  # Mount the audit log file
       - mysql-data:/var/lib/mysql
     ports:
       - "3306:3306"

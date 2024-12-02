@@ -75,6 +75,7 @@ function generate_users_data($conn): void {
             'role' => 'patient',
             'email' => 'patient_1@gmail.com',
             'password' => '123456',
+            'patientSSN' => '123-45-6789',
             'firstName' => 'patient_1_firstName',
             'lastName' => 'patient_1_lastName',
             'birthDate' => '1990-01-11',
@@ -86,6 +87,7 @@ function generate_users_data($conn): void {
             'role' => 'patient',
             'email' => 'patient_2@gmail.com',
             'password' => '123456',
+            'patientSSN' => '987-65-4321',
             'firstName' => 'patient_2_firstName',
             'lastName' => 'patient_2_lastName',
             'birthDate' => '1995-02-22',
@@ -97,6 +99,7 @@ function generate_users_data($conn): void {
             'role' => 'patient',
             'email' => 'patient_3@gmail.com',
             'password' => '123456',
+            'patientSSN' => '543-21-9876',
             'firstName' => 'patient_3_firstName',
             'lastName' => 'patient_3_lastName',
             'birthDate' => '2000-03-01',
@@ -147,10 +150,11 @@ function generate_users_data($conn): void {
             $b_crypted_password = generate_b_crypted_password(password: $userData['password']);
 
             if ($userData['role'] === 'patient') {
-                $stmt = $conn->prepare("CALL insertPatient(?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt = $conn->prepare("CALL insertPatient(?, ?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
                     $userData['email'],
                     $b_crypted_password,
+                    $userData['patientSSN'],
                     $userData['firstName'],
                     $userData['lastName'],
                     $userData['birthDate'],

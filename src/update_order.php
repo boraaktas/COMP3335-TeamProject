@@ -19,7 +19,9 @@ $message = '';
 
 try {
     // Fetch orders assigned to this lab staff
-    $sql = "SELECT orderID, patientID, testID, orderDate FROM orders WHERE labStaffOrderID = ?";
+    $sql = "SELECT orderID 
+            FROM orders 
+            WHERE labStaffOrderID = ? AND orderStatus != 'Completed'";
     $params = ['types' => 'i', 'values' => [$staffID]];
     $ordersResult = queryDatabase($role, $sql, $params);
 
@@ -29,7 +31,8 @@ try {
     }
 
     // Fetch patients
-    $sql = "SELECT patientID, firstName, lastName FROM patients";
+    $sql = "SELECT patientID, patientSSN, firstName, lastName 
+            FROM patients";
     $params = ['types' => '', 'values' => []];
     $patientsResult = queryDatabase($role, $sql, $params);
 
@@ -39,7 +42,8 @@ try {
     }
 
     // Fetch tests
-    $sql = "SELECT testID, testName FROM testCatalogs";
+    $sql = "SELECT testID, testName 
+            FROM testCatalogs";
     $testsResult = queryDatabase($role, $sql, $params);
 
     $tests = [];
@@ -51,7 +55,9 @@ try {
     if (isset($_POST['selectOrder'])) {
         // Fetch selected order details
         $orderID = $_POST['orderID'];
-        $sql = "SELECT * FROM orders WHERE orderID = ?";
+        $sql = "SELECT * 
+                FROM orders 
+                WHERE orderID = ?";
         $params = ['types' => 'i', 'values' => [$orderID]];
         $orderResult = queryDatabase($role, $sql, $params);
         $order = $orderResult->fetch_assoc();
@@ -63,7 +69,9 @@ try {
         $testID = $_POST['testID'];
         $orderDate = $_POST['orderDate'];
 
-        $sql = "UPDATE orders SET patientID = ?, testID = ?, orderDate = ? WHERE orderID = ?";
+        $sql = "UPDATE orders
+                SET patientID = ?, testID = ?, orderDate = ?
+                WHERE orderID = ?";
         $params = [
             'types' => 'iisi',
             'values' => [$patientID, $testID, $orderDate, $orderID]
@@ -77,12 +85,26 @@ try {
         // Delete the order
         $orderID = $_POST['orderID'];
 
-        $sql = "DELETE FROM orders WHERE orderID = ?";
+        $sql = "DELETE
+                FROM orders
+                WHERE orderID = ?";
         $params = ['types' => 'i', 'values' => [$orderID]];
         queryDatabase($role, $sql, $params);
 
         $message = "Order deleted successfully.";
         unset($order); // Clear the selected order
+
+        // Refresh orders list
+        $sql = "SELECT orderID 
+                FROM orders 
+                WHERE labStaffOrderID = ? AND orderStatus != 'Completed'";
+        $params = ['types' => 'i', 'values' => [$staffID]];
+        $ordersResult = queryDatabase($role, $sql, $params);
+
+        $orders = [];
+        while ($row = $ordersResult->fetch_assoc()) {
+            $orders[] = $row;
+        }
     }
 
 } catch (Exception $e) {
@@ -153,9 +175,7 @@ try {
                         <select name="orderID" id="orderID" class="form-control" required>
                             <?php foreach ($orders as $orderItem): ?>
                                 <option value="<?php echo htmlspecialchars($orderItem['orderID']); ?>">
-                                    Order ID: <?php echo htmlspecialchars($orderItem['orderID']); ?>,
-                                    Patient ID: <?php echo htmlspecialchars($orderItem['patientID']); ?>,
-                                    Test ID: <?php echo htmlspecialchars($orderItem['testID']); ?>
+                                    Order ID: <?php echo htmlspecialchars($orderItem['orderID']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -164,9 +184,6 @@ try {
                 </form>
                 <div class="back-link">
                     <a href="welcome_labstaff.php" class="btn btn-secondary mt-3">Back</a>
-                </div>
-                <div class="logout-link">
-                    <a href="logout.php">Logout</a>
                 </div>
             </div>
         <?php else: ?>
@@ -180,7 +197,7 @@ try {
                             <?php foreach ($patients as $patient): ?>
                                 <option value="<?php echo htmlspecialchars($patient['patientID']); ?>"
                                     <?php if ($patient['patientID'] == $order['patientID']) echo 'selected'; ?>>
-                                    <?php echo htmlspecialchars($patient['firstName'] . ' ' . $patient['lastName']); ?>
+                                    <?php echo htmlspecialchars($patient['firstName'] . ' ' . $patient['lastName'] . ' (' . $patient['patientSSN'] . ')'); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -208,9 +225,6 @@ try {
                 </form>
                 <div class="back-link">
                     <a href="update_order.php" class="btn btn-secondary mt-3">Back</a>
-                </div>
-                <div class="logout-link">
-                    <a href="logout.php">Logout</a>
                 </div>
             </div>
         <?php endif; ?>

@@ -12,17 +12,19 @@ $role = $_SESSION['role'];
 $secretaryID = $_SESSION['userID'];
 $userName = $_SESSION['userName'];
 
-$pageTitle = 'Create Appointment';
-$heading = 'Create a New Appointment';
+$pageTitle = 'Change Payment Status';
+$heading = 'Change Payment Status of an Order';
 $error = '';
 $message = '';
 
 try {
-    // Fetch orders with status 'Pending Appointment'
-    $sql = "SELECT orders.orderID
+    // Fetch orders where the appointment belongs to this secretary
+    $sql = "SELECT orders.orderID, billings.paymentStatus
             FROM orders
-            WHERE orders.orderStatus = 'Pending Appointment'";
-    $params = ['types' => '', 'values' => []];
+            JOIN appointments ON orders.orderID = appointments.orderID
+            JOIN billings ON orders.orderID = billings.orderID
+            WHERE appointments.secretaryID = ?";
+    $params = ['types' => 'i', 'values' => [$secretaryID]];
     $ordersResult = queryDatabase($role, $sql, $params);
 
     $orders = [];
@@ -31,24 +33,27 @@ try {
     }
 
     // Handle form submission
-    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['changePaymentStatus'])) {
         $orderID = $_POST['orderID'];
-        $appointmentDateTime = $_POST['appointmentDateTime'];
+        $paymentStatus = $_POST['paymentStatus'];
 
-        // Insert the new appointment into the database
-        $sql = "INSERT INTO appointments (orderID, secretaryID, appointmentDateTime) VALUES (?, ?, ?)";
+        // CHANGE current payment status
+        $sql = "UPDATE billings
+                SET paymentStatus = ?
+                WHERE orderID = ?";
         $params = [
-            'types' => 'iis',
-            'values' => [$orderID, $secretaryID, $appointmentDateTime]
+            'types' => 'ii',
+            'values' => [$paymentStatus, $orderID]
         ];
         queryDatabase($role, $sql, $params);
 
-        $message = "Appointment created successfully.";
+        $message = "Payment status changed successfully.";
 
         // Refresh orders list
         $orders = array_filter($orders, function($order) use ($orderID) {
             return $order['orderID'] != $orderID;
         });
+
     }
 
 } catch (Exception $e) {
@@ -108,12 +113,6 @@ try {
         .form-group {
             margin-bottom: 1rem;
         }
-        .datetime-input {
-            position: relative;
-        }
-        .datetime-input input[type="datetime-local"] {
-            padding-right: 2.5rem;
-        }
     </style>
 </head>
 <body>
@@ -145,11 +144,14 @@ try {
                     </div>
 
                     <div class="form-group">
-                        <label for="appointmentDateTime">Appointment Date and Time:</label>
-                        <input type="datetime-local" name="appointmentDateTime" id="appointmentDateTime" class="form-control" required>
+                        <label for="paymentStatus">Payment Status:</label>
+                        <select name="paymentStatus" id="paymentStatus" class="form-control" required>
+                            <option value=1>Paid</option>
+                            <option value=0>Unpaid</option>
+                        </select>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-block">Create Appointment</button>
+                    <button type="submit" name="changePaymentStatus" class="btn btn-primary btn-block">Change Payment Status</button>
                 </form>
                 <div class="back-link">
                     <a href="welcome_secretary.php" class="btn btn-secondary mt-3">Back to Welcome Page</a>
@@ -157,7 +159,7 @@ try {
             </div>
         <?php else: ?>
             <div class="no-orders">
-                <p>No orders with status 'Pending Appointment' available.</p>
+                <p>No orders available to change payment status.</p>
                 <div class="back-link">
                     <a href="welcome_secretary.php" class="btn btn-secondary mt-3">Back to Welcome Page</a>
                 </div>

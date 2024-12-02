@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS userRoles (
 
 CREATE TABLE IF NOT EXISTS patients (
     patientID INT NOT NULL,
+    patientSSN VARCHAR(255) NOT NULL UNIQUE,
     firstName VARCHAR(255) NOT NULL,
     lastName VARCHAR(255) NOT NULL,
     birthDate DATE NOT NULL,
@@ -49,7 +50,7 @@ CREATE TABLE IF NOT EXISTS staffs (
 CREATE TABLE IF NOT EXISTS testCatalogs (
     testID INT AUTO_INCREMENT PRIMARY KEY,
     testCode INT NOT NULL UNIQUE,
-    testName VARCHAR(255) NOT NULL,
+    testName VARCHAR(255) NOT NULL UNIQUE,
     testCost INT NOT NULL,
     testDescription TEXT NOT NULL
 );
@@ -133,13 +134,11 @@ LEFT JOIN appointments ON orders.orderID = appointments.orderID;
 CREATE VIEW patientResults AS
 SELECT patients.patientID, orders.orderID,
        testCatalogs.testName,
-       staffs.firstName AS labStaffFirstName, staffs.lastName AS labStaffLastName,
        results.reportURL, results.interpretation
 FROM orders
 JOIN patients ON orders.patientID = patients.patientID
 JOIN testCatalogs ON orders.testID = testCatalogs.testID
-JOIN results ON orders.orderID = results.orderID
-JOIN staffs ON results.labStaffResultID = staffs.staffID;
+JOIN results ON orders.orderID = results.orderID;
 
 -- Create a view to display the billings of a patient
 CREATE VIEW patientBillings AS
@@ -153,6 +152,7 @@ JOIN patients ON orders.patientID = patients.patientID;
 -- Create a view to display the orders of a lab staff
 CREATE VIEW labStaffOrders AS
 SELECT staffs.staffID AS labStaffID, orders.orderID, testCatalogs.testName,
+       patients.patientSSN AS patientSSN,
        patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
        orders.orderDate, orders.orderStatus
 FROM orders
@@ -162,43 +162,54 @@ JOIN patients ON orders.patientID = patients.patientID;
 
 -- Create a view to display the results of a lab staff
 CREATE VIEW labStaffResults AS
-SELECT staffs.staffID AS labStaffID, orders.orderID, testCatalogs.testName,
-       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
-       results.reportURL, results.interpretation
+SELECT orders.orderID,
+       orders.labStaffOrderID AS labStaffOrderID, results.labStaffResultID AS labStaffResultID,
+       resultStaff.firstName AS labStaffResultFirstName, resultStaff.lastName AS labStaffResultLastName,
+       orderStaff.firstName AS labStaffOrderFirstName, orderStaff.lastName AS labStaffOrderLastName,
+       patients.patientSSN AS patientSSN, patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
+       testCatalogs.testName, results.reportURL, results.interpretation
 FROM orders
-JOIN staffs ON orders.labStaffOrderID = staffs.staffID
-JOIN testCatalogs ON orders.testID = testCatalogs.testID
 JOIN results ON orders.orderID = results.orderID
-JOIN patients ON orders.patientID = patients.patientID;
+JOIN testCatalogs ON orders.testID = testCatalogs.testID
+JOIN patients ON orders.patientID = patients.patientID
+JOIN staffs AS resultStaff ON results.labStaffResultID = resultStaff.staffID
+JOIN staffs AS orderStaff ON orders.labStaffOrderID = orderStaff.staffID;
 
 -- Create a view to display the appointments of a secretary
 CREATE VIEW secretaryAppointments AS
-SELECT orders.orderID,
+SELECT orders.orderID, staffs.staffID AS secretaryID,
+       patients.patientSSN AS patientSSN,
        patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
        staffs.firstName AS secretaryFirstName, staffs.lastName AS secretaryLastName,
        appointments.appointmentDateTime
 FROM orders
 JOIN patients ON orders.patientID = patients.patientID
-LEFT JOIN appointments ON orders.orderID = appointments.orderID
-LEFT JOIN staffs ON appointments.secretaryID = staffs.staffID;
+JOIN appointments ON orders.orderID = appointments.orderID
+JOIN staffs ON appointments.secretaryID = staffs.staffID;
 
 -- Create a view to display the billings of a secretary
 CREATE VIEW secretaryBillings AS
-SELECT orders.orderID,
+SELECT orders.orderID, staffs.staffID AS secretaryID,
+       patients.patientSSN AS patientSSN,
        patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
        billings.billedAmount, billings.insuranceClaimStatus, billings.paymentStatus
 FROM orders
 JOIN patients ON orders.patientID = patients.patientID
-JOIN billings ON orders.orderID = billings.orderID;
+JOIN billings ON orders.orderID = billings.orderID
+JOIN appointments ON orders.orderID = appointments.orderID
+JOIN staffs ON appointments.secretaryID = staffs.staffID;
 
 -- Create a view to display the results of a secretary
 CREATE VIEW secretaryResults AS
-SELECT orders.orderID,
+SELECT orders.orderID, staffs.staffID AS secretaryID,
+       patients.patientSSN AS patientSSN,
        patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
        results.reportURL
 FROM orders
 JOIN patients ON orders.patientID = patients.patientID
-JOIN results ON orders.orderID = results.orderID;
+JOIN results ON orders.orderID = results.orderID
+JOIN appointments ON orders.orderID = appointments.orderID
+JOIN staffs ON appointments.secretaryID = staffs.staffID;
 
 
  -- TRIGGERS:
@@ -310,6 +321,7 @@ DELIMITER $$
 CREATE PROCEDURE insertPatient(
     IN email VARCHAR(255),
     IN b_crypted_password VARCHAR(255),
+    IN patientSSN VARCHAR(255),
     IN firstName VARCHAR(255),
     IN lastName VARCHAR(255),
     IN birthDate DATE,
@@ -333,8 +345,8 @@ BEGIN
     VALUES (@newUserID, @roleID);
     
     -- Insert into the patients table
-    INSERT INTO patients (patientID, firstName, lastName, birthDate, phoneNo, insuranceType)
-    VALUES (@newUserID, firstName, lastName, birthDate, phoneNo, insuranceType);
+    INSERT INTO patients (patientID, patientSSN, firstName, lastName, birthDate, phoneNo, insuranceType)
+    VALUES (@newUserID, patientSSN, firstName, lastName, birthDate, phoneNo, insuranceType);
 END $$
 DELIMITER ;
 
@@ -390,8 +402,8 @@ GRANT SELECT ON comp3335_database.labStaffOrders TO labStaff;
 GRANT SELECT ON comp3335_database.labStaffResults TO labStaff;
 GRANT SELECT ON comp3335_database.patients TO labStaff;  -- they should see patient information to create order
 GRANT SELECT ON comp3335_database.testCatalogs TO labStaff;  -- they should see the test catalog to create order
-GRANT SELECT, INSERT, UPDATE ON comp3335_database.orders TO labStaff;
-GRANT SELECT, INSERT, UPDATE ON comp3335_database.results TO labStaff;
+GRANT SELECT, INSERT, UPDATE, DELETE ON comp3335_database.orders TO labStaff;
+GRANT SELECT, INSERT, UPDATE, DELETE ON comp3335_database.results TO labStaff;
 
 
 -- secretary
@@ -399,8 +411,8 @@ GRANT SELECT, UPDATE ON comp3335_database.orders TO secretary;  -- if they can c
 GRANT SELECT ON comp3335_database.secretaryAppointments TO secretary;
 GRANT SELECT ON comp3335_database.secretaryBillings TO secretary;
 GRANT SELECT ON comp3335_database.secretaryResults TO secretary;
-GRANT SELECT ON comp3335_database.orders TO secretary;
-GRANT SELECT, INSERT, UPDATE ON comp3335_database.appointments TO secretary;
+GRANT SELECT ON comp3335_database.orders TO secretary;  -- they should see order information to create appointment
+GRANT SELECT, INSERT, UPDATE, DELETE ON comp3335_database.appointments TO secretary;
 GRANT SELECT, UPDATE ON comp3335_database.billings TO secretary;
 
 -- exporter user for MySQL metrics collection by mysqld-exporter

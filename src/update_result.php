@@ -19,7 +19,10 @@ $message = '';
 
 try {
     // Fetch results created by this lab staff
-    $sql = "SELECT resultID, orderID, interpretation FROM results WHERE labStaffResultID = ?";
+    $sql = "SELECT orders.orderID, results.resultID
+            FROM results 
+            JOIN orders ON results.orderID = orders.orderID
+            WHERE labStaffResultID = ?";
     $params = ['types' => 'i', 'values' => [$staffID]];
     $resultsResult = queryDatabase($role, $sql, $params);
 
@@ -32,7 +35,9 @@ try {
     if (isset($_POST['selectResult'])) {
         // Fetch selected result details
         $resultID = $_POST['resultID'];
-        $sql = "SELECT * FROM results WHERE resultID = ?";
+        $sql = "SELECT * 
+                FROM results 
+                WHERE resultID = ?";
         $params = ['types' => 'i', 'values' => [$resultID]];
         $resultResult = queryDatabase($role, $sql, $params);
         $result = $resultResult->fetch_assoc();
@@ -41,9 +46,11 @@ try {
         // Update the result
         $resultID = $_POST['resultID'];
         $interpretation = $_POST['interpretation'];
-        $reportURL = 'https://www.example.com/report1'; // Fixed URL
+        $reportURL = $_POST['reportURL'];
 
-        $sql = "UPDATE results SET interpretation = ?, reportURL = ? WHERE resultID = ?";
+        $sql = "UPDATE results 
+                SET interpretation = ?, reportURL = ? 
+                WHERE resultID = ?";
         $params = [
             'types' => 'ssi',
             'values' => [$interpretation, $reportURL, $resultID]
@@ -57,12 +64,27 @@ try {
         // Delete the result
         $resultID = $_POST['resultID'];
 
-        $sql = "DELETE FROM results WHERE resultID = ?";
+        $sql = "DELETE 
+                FROM results 
+                WHERE resultID = ?";
         $params = ['types' => 'i', 'values' => [$resultID]];
         queryDatabase($role, $sql, $params);
 
         $message = "Result deleted successfully.";
         unset($result); // Clear the selected result
+
+        // Fetch updated results
+        $sql = "SELECT orders.orderID, results.resultID
+                FROM results 
+                JOIN orders ON results.orderID = orders.orderID
+                WHERE labStaffResultID = ?";
+        $params = ['types' => 'i', 'values' => [$staffID]];
+        $resultsResult = queryDatabase($role, $sql, $params);
+
+        $results = [];
+        while ($row = $resultsResult->fetch_assoc()) {
+            $results[] = $row;
+        }
     }
 
 } catch (Exception $e) {
@@ -136,7 +158,6 @@ try {
                         <select name="resultID" id="resultID" class="form-control" required>
                             <?php foreach ($results as $resultItem): ?>
                                 <option value="<?php echo htmlspecialchars($resultItem['resultID']); ?>">
-                                    Result ID: <?php echo htmlspecialchars($resultItem['resultID']); ?>,
                                     Order ID: <?php echo htmlspecialchars($resultItem['orderID']); ?>
                                 </option>
                             <?php endforeach; ?>
@@ -155,6 +176,15 @@ try {
             <div class="form-container mx-auto" style="max-width: 600px;">
                 <form method="post" action="">
                     <input type="hidden" name="resultID" value="<?php echo htmlspecialchars($result['resultID']); ?>">
+
+                    <div class="form-group">
+                        <label for="orderID">Order ID: <?php echo htmlspecialchars($result['orderID']); ?></label>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reportURL">Report URL:</label>
+                        <input type="text" name="reportURL" id="reportURL" class="form-control" value="https://www.example.com/report1" readonly>
+                    </div>
 
                     <div class="form-group">
                         <label for="interpretation">Interpretation:</label>

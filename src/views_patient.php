@@ -50,7 +50,7 @@ if (!array_key_exists($task, $allowed_tasks)) {
         $params = [$userID];
         $types = 'i';
     } elseif ($task === "view_results") {
-        $sql = "SELECT pr.orderID, pr.testName, pr.labStaffFirstName, pr.labStaffLastName, pr.reportURL, pr.interpretation
+        $sql = "SELECT pr.orderID, pr.testName, pr.reportURL, pr.interpretation
                 FROM patientResults pr
                 WHERE pr.patientID = ?";
         $params = [$userID];
@@ -104,7 +104,6 @@ if (!array_key_exists($task, $allowed_tasks)) {
                         <tr>
                             <th>Order</th>
                             <th>Test Name</th>
-                            <th>Physician</th>
                             <th>Report</th>
                             <th>Interpretation</th>
                         </tr>
@@ -114,7 +113,6 @@ if (!array_key_exists($task, $allowed_tasks)) {
                     $tableOutput .= "<tr>
                         <td>" . htmlspecialchars($row["orderID"]) . "</td>
                         <td>" . htmlspecialchars($row["testName"]) . "</td>
-                        <td>" . htmlspecialchars($row["labStaffFirstName"]) . " " . htmlspecialchars($row["labStaffLastName"]) . "</td>
                         <td><a href='" . htmlspecialchars($row["reportURL"]) . "' target='_blank'>View Report</a></td>
                         <td>" . htmlspecialchars($row["interpretation"]) . "</td>
                     </tr>";

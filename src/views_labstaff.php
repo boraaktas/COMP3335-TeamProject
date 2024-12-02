@@ -57,17 +57,20 @@ if (!array_key_exists($task, $allowed_tasks)) {
     $userID = $_SESSION['userID'];
 
     if ($task === "view_orders") {
-        $sql = "SELECT lso.orderID, lso.testName, lso.patientFirstName, lso.patientLastName, lso.orderDate, lso.orderStatus
+        $sql = "SELECT lso.orderID, lso.testName, lso.patientSSN, lso.patientFirstName, lso.patientLastName, lso.orderDate, lso.orderStatus
                 FROM labStaffOrders lso
                 WHERE lso.labStaffID = ?";
         $params = [$userID];
         $types = 'i';
     } elseif ($task === "view_results") {
-        $sql = "SELECT lsr.orderID, lsr.testName, lsr.patientFirstName, lsr.patientLastName, lsr.reportURL, lsr.interpretation
+        $sql = "SELECT lsr.orderID, lsr.testName, lsr.patientSSN, lsr.patientFirstName, lsr.patientLastName,
+                       lsr.labStaffOrderFirstName, lsr.labStaffOrderLastName,
+                       lsr.labStaffResultFirstName, lsr.labStaffResultLastName,
+                       lsr.reportURL, lsr.interpretation
                 FROM labStaffResults lsr
-                WHERE lsr.labStaffID = ?";
-        $params = [$userID];
-        $types = 'i';
+                WHERE lsr.labStaffOrderID = ? OR lsr.labStaffResultID = ?";
+        $params = [$userID, $userID];
+        $types = 'ii';
     }
 
     // Query the database
@@ -85,7 +88,8 @@ if (!array_key_exists($task, $allowed_tasks)) {
                         <tr>
                             <th>Order</th>
                             <th>Test Name</th>
-                            <th>Patient</th>
+                            <th>Patient SSN</th>
+                            <th>Patient Name Surname</th>
                             <th>Order Date</th>
                             <th>Oder Status</th>
                         </tr>
@@ -95,6 +99,7 @@ if (!array_key_exists($task, $allowed_tasks)) {
                     $tableOutput .= "<tr>
                         <td>" . htmlspecialchars($row["orderID"]) . "</td>
                         <td>" . htmlspecialchars($row["testName"]) . "</td>
+                        <td>" . htmlspecialchars($row["patientSSN"]) . "</td>
                         <td>" . htmlspecialchars($row["patientFirstName"]) . " " . htmlspecialchars($row["patientLastName"]) . "</td>
                         <td>" . htmlspecialchars($row["orderDate"]) . "</td>
                         <td>" . htmlspecialchars($row["orderStatus"]) . "</td>
@@ -109,7 +114,10 @@ if (!array_key_exists($task, $allowed_tasks)) {
                         <tr>
                             <th>Order</th>
                             <th>Test Name</th>
-                            <th>Patient</th>
+                            <th>Patient SSN</th>
+                            <th>Patient Name Surname</th>
+                            <th>Physician Name Surname</th>
+                            <th>Pathologist Name Surname</th>
                             <th>Report</th>
                             <th>Interpretation</th>
                         </tr>
@@ -119,7 +127,10 @@ if (!array_key_exists($task, $allowed_tasks)) {
                     $tableOutput .= "<tr>
                         <td>" . htmlspecialchars($row["orderID"]) . "</td>
                         <td>" . htmlspecialchars($row["testName"]) . "</td>
+                        <td>" . htmlspecialchars($row["patientSSN"]) . "</td>
                         <td>" . htmlspecialchars($row["patientFirstName"]) . " " . htmlspecialchars($row["patientLastName"]) . "</td>
+                        <td>" . htmlspecialchars($row["labStaffOrderFirstName"]) . " " . htmlspecialchars($row["labStaffOrderLastName"]) . "</td>
+                        <td>" . htmlspecialchars($row["labStaffResultFirstName"]) . " " . htmlspecialchars($row["labStaffResultLastName"]) . "</td>
                         <td><a href='" . htmlspecialchars($row["reportURL"]) . "' target='_blank'>View Report</a></td>
                         <td>" . htmlspecialchars($row["interpretation"]) . "</td>
                     </tr>";

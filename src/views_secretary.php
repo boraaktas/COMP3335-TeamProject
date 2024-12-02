@@ -57,20 +57,23 @@ if (!array_key_exists($task, $allowed_tasks)) {
     $userID = $_SESSION['userID'];
 
     if ($task === "view_appointments") {
-        $sql = "SELECT sa.orderID, sa.patientFirstName, sa.patientLastName, sa.secretaryFirstName, sa.secretaryLastName, sa.appointmentDateTime
-                FROM secretaryAppointments sa";
-        $params = [];
-        $types = '';
+        $sql = "SELECT sa.orderID, sa.patientSSN, sa.patientFirstName, sa.patientLastName, sa.appointmentDateTime
+                FROM secretaryAppointments sa
+                WHERE sa.secretaryID = ?";
+        $params = [$userID];
+        $types = 'i';
     } elseif ($task === "view_billings") {
-        $sql = "SELECT sb.orderID, sb.patientFirstName, sb.patientLastName, sb.billedAmount, sb.insuranceClaimStatus, sb.paymentStatus
-                FROM secretaryBillings sb";
-        $params = [];
-        $types = '';
+        $sql = "SELECT sb.orderID, sb.patientSSN, sb.patientFirstName, sb.patientLastName, sb.billedAmount, sb.insuranceClaimStatus, sb.paymentStatus
+                FROM secretaryBillings sb
+                WHERE sb.secretaryID = ?";
+        $params = [$userID];
+        $types = 'i';
     } elseif ($task === "view_results") {
-        $sql = "SELECT sr.orderID, sr.patientFirstName, sr.patientLastName, sr.reportURL
-                FROM secretaryResults sr";
-        $params = [];
-        $types = '';
+        $sql = "SELECT sr.orderID, sr.patientSSN, sr.patientFirstName, sr.patientLastName, sr.reportURL
+                FROM secretaryResults sr
+                WHERE sr.secretaryID = ?";
+        $params = [$userID];
+        $types = 'i';
     }
 
     // Query the database
@@ -87,8 +90,8 @@ if (!array_key_exists($task, $allowed_tasks)) {
                     <thead class='thead-dark'>
                         <tr>
                             <th>Order</th>
-                            <th>Patient</th>
-                            <th>Secretary</th>
+                            <th>Patient SSN</th>
+                            <th>Patient Name Surname</th>
                             <th>Appointment Date & Time</th>
                         </tr>
                     </thead>
@@ -96,8 +99,8 @@ if (!array_key_exists($task, $allowed_tasks)) {
                 while ($row = $result->fetch_assoc()) {
                     $tableOutput .= "<tr>
                         <td>" . htmlspecialchars($row["orderID"]) . "</td>
+                        <td>" . htmlspecialchars($row["patientSSN"]) . "</td>
                         <td>" . htmlspecialchars($row["patientFirstName"]) . " " . htmlspecialchars($row["patientLastName"]) . "</td>
-                        <td>" . htmlspecialchars($row["secretaryFirstName"] === null ? "N/A" : $row["secretaryFirstName"] . " " . $row["secretaryLastName"]) . "</td>
                         <td>" . htmlspecialchars($row["appointmentDateTime"] ?? "N/A") . "</td>
                     </tr>";
                 }
@@ -109,7 +112,8 @@ if (!array_key_exists($task, $allowed_tasks)) {
                     <thead class='thead-dark'>
                         <tr>
                             <th>Order</th>
-                            <th>Patient</th>
+                            <th>Patient SSN</th>
+                            <th>Patient Name Surname</th>
                             <th>Billed Amount</th>
                             <th>Insurance Claim Status</th>
                             <th>Payment Status</th>
@@ -119,6 +123,7 @@ if (!array_key_exists($task, $allowed_tasks)) {
                 while ($row = $result->fetch_assoc()) {
                     $tableOutput .= "<tr>
                         <td>" . htmlspecialchars($row["orderID"]) . "</td>
+                        <td>" . htmlspecialchars($row["patientSSN"]) . "</td>
                         <td>" . htmlspecialchars($row["patientFirstName"]) . " " . htmlspecialchars($row["patientLastName"]) . "</td>
                         <td>" . htmlspecialchars($row["billedAmount"]) . "</td>
                         <td>" . htmlspecialchars(1 === $row["insuranceClaimStatus"] ? "Approved" : "Rejected") . "</td>
@@ -132,7 +137,8 @@ if (!array_key_exists($task, $allowed_tasks)) {
                     <thead class='thead-dark'>
                         <tr>
                             <th>Order</th>
-                            <th>Patient</th>
+                            <th>Patient SSN</th>
+                            <th>Patient Name Surname</th>
                             <th>Report</th>
                         </tr>
                     </thead>
@@ -140,6 +146,7 @@ if (!array_key_exists($task, $allowed_tasks)) {
                 while ($row = $result->fetch_assoc()) {
                     $tableOutput .= "<tr>
                         <td>" . htmlspecialchars($row["orderID"]) . "</td>
+                        <td>" . htmlspecialchars($row["patientSSN"]) . "</td>
                         <td>" . htmlspecialchars($row["patientFirstName"]) . " " . htmlspecialchars($row["patientLastName"]) . "</td>
                         <td><a href='" . htmlspecialchars($row["reportURL"]) . "' target='_blank'>View Report</a></td>
                     </tr>";

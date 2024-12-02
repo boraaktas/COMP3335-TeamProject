@@ -19,7 +19,8 @@ $message = '';
 
 try {
     // Fetch patients
-    $sql = "SELECT patientID, firstName, lastName FROM patients";
+    $sql = "SELECT patientID, patientSSN, firstName, lastName
+            FROM patients";
     $params = ['types' => '', 'values' => []];
     $patientsResult = queryDatabase($role, $sql, $params);
 
@@ -29,7 +30,9 @@ try {
     }
 
     // Fetch tests from the catalog
-    $sql = "SELECT testCode, testName FROM testCatalogs";
+    $sql = "SELECT testID, testName 
+            FROM testCatalogs";
+    $params = ['types' => '', 'values' => []];
     $testsResult = queryDatabase($role, $sql, $params);
 
     $tests = [];
@@ -119,7 +122,7 @@ try {
                     <select name="patientID" id="patientID" class="form-control" required>
                         <?php foreach ($patients as $patient): ?>
                             <option value="<?php echo htmlspecialchars($patient['patientID']); ?>">
-                                <?php echo htmlspecialchars($patient['firstName'] . ' ' . $patient['lastName']); ?>
+                                <?php echo htmlspecialchars($patient['firstName'] . ' ' . $patient['lastName'] . ' (' . $patient['patientSSN'] . ')'); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -140,14 +143,10 @@ try {
                     <label for="orderDate">Order Date:</label>
                     <input type="date" name="orderDate" id="orderDate" class="form-control" required>
                 </div>
-
                 <button type="submit" class="btn btn-primary btn-block">Create Order</button>
             </form>
             <div class="back-link">
-                <a href="welcome_labstaff.php" class="btn btn-secondary mt-3">Back</a>
-            </div>
-            <div class="logout-link">
-                <a href="logout.php">Logout</a>
+                <a href="welcome_labstaff.php" class="btn btn-secondary mt-3">Back to Welcome Page</a>
             </div>
         </div>
     </div>

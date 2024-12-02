@@ -18,13 +18,11 @@ $error = '';
 $message = '';
 
 try {
-    // Fetch orders with 'Pending Result' status that have an appointment
-    $sql = "
-        SELECT orders.orderID
-        FROM orders
-        JOIN appointments ON orders.orderID = appointments.orderID
-        WHERE orders.orderStatus = 'Pending Result'
-    ";
+    // Fetch orders with 'Pending Result'
+    $sql = "SELECT orders.orderID
+            FROM orders
+            WHERE orders.orderStatus = 'Pending Result'
+           ";
     $params = ['types' => '', 'values' => []];
     $ordersResult = queryDatabase($role, $sql, $params);
 
@@ -48,6 +46,11 @@ try {
         queryDatabase($role, $sql, $params);
 
         $message = "Result created successfully.";
+
+        // Refresh orders list
+        $orders = array_filter($orders, function($order) use ($orderID) {
+            return $order['orderID'] != $orderID;
+        });
     }
 
 } catch (Exception $e) {
@@ -123,6 +126,11 @@ try {
                             </option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="reportURL">Report URL:</label>
+                    <input type="text" name="reportURL" id="reportURL" class="form-control" value="https://www.example.com/report1" readonly>
                 </div>
 
                 <div class="form-group">

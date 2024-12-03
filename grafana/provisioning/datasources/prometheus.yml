@@ -1,0 +1,12 @@
+{
+    "apiVersion":  1,
+    "datasources":  [
+                        {
+                            "access":  "proxy",
+                            "url":  "http://COMP3335_prometheus:9090",
+                            "name":  "Prometheus",
+                            "type":  "prometheus",
+                            "uid": "fe5rzivwmmcqof"
+                        }
+                    ]
+}

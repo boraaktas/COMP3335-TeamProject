@@ -1,0 +1,90 @@
+apiVersion: 1
+groups:
+    - orgId: 1
+      name: Alert
+      folder: Alerts
+      interval: 10s
+      rules:
+        - uid: fe5s1fib9z9j4f
+          title: SQL Injection Attempts
+          condition: C
+          data:
+            - refId: B
+              queryType: range
+              relativeTimeRange:
+                from: 300
+                to: 0
+              datasourceUid: "de5rx960ppreof"
+              model:
+                datasource:
+                    type: loki
+                    uid: "de5rx960ppreof"
+                editorMode: code
+                expr: count_over_time({job="mysql_audit_logs"} |= "' OR"[1m])
+                intervalMs: 1000
+                legendFormat: SQL Injection Attempts
+                maxDataPoints: 43200
+                queryType: range
+                refId: B
+            - refId: A
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - A
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: A
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 10
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          dashboardUid: ae5easyzntb0gb
+          panelId: 2
+          noDataState: OK
+          execErrState: Error
+          for: 10s
+          annotations:
+            __dashboardUid__: ae5easyzntb0gb
+            __panelId__: "2"
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: Webhook Alert

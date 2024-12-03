@@ -55,12 +55,18 @@ services:
   grafana:
     image: grafana/grafana
     container_name: COMP3335_grafana
+    env_file:
+      - .env
     depends_on:
       - prometheus
     ports:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/provisioning/alerting:/etc/grafana/provisioning/alerting  # Mount the alerting directory
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
 
   loki:
     image: grafana/loki

@@ -313,7 +313,7 @@
                                                             "type":  "loki",
                                                             "uid":  "de5rx960ppreof"
                                                         },
-                                         "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"SELECT\" |= \"mysql.user\"[1m])",
+                                         "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"SELECT\" |~ \"(FROM users|FROM patients|password|patientSSN)\"[1m])",
                                          "legendFormat":  "Sensitive Table Access",
                                          "refId":  "D"
                                      }
@@ -513,7 +513,7 @@
                                                             "type":  "loki",
                                                             "uid":  "de5rx960ppreof"
                                                         },
-                                         "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"denied\"[1m])",
+                                         "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"STATUS=\" |~ \"1142\"[1m])",
                                          "legendFormat":  "Denied Access",
                                          "refId":  "C"
                                      }
@@ -609,7 +609,7 @@
                                                             "type":  "loki",
                                                             "uid":  "de5rx960ppreof"
                                                         },
-                                         "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"DROP TABLE\"[1m])",
+                                         "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"DROP TABLE\" |~ \"(users|patients|roles|userRoles|staffs|orders|appointments|results|billings|acceptedInsurances|testCatalogs)\"[1m])",
                                          "legendFormat":  "Policy Violations",
                                          "refId":  "F"
                                      }

@@ -109,7 +109,7 @@
                                        {
                                            "datasource":  {
                                                               "type":  "loki",
-                                                              "uid":  "ce5s1qpidwge8e"
+                                                              "uid":  "de5rx960ppreof"
                                                           },
                                            "expr":  "count_over_time({job=\"mysql_audit_logs\"}[1m])",
                                            "legendFormat":  "All Logs",
@@ -122,7 +122,7 @@
                    {
                        "datasource":  {
                                           "type":  "loki",
-                                          "uid":  "ce5s1qpidwge8e"
+                                          "uid":  "de5rx960ppreof"
                                       },
                        "fieldConfig":  {
                                            "defaults":  {
@@ -209,7 +209,7 @@
                                        {
                                            "datasource":  {
                                                               "type":  "loki",
-                                                              "uid":  "ce5s1qpidwge8e"
+                                                              "uid":  "de5rx960ppreof"
                                                           },
                                            "editorMode":  "code",
                                            "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"\u0027 OR\"[1m])",
@@ -224,7 +224,7 @@
                    {
                        "datasource":  {
                                           "type":  "loki",
-                                          "uid":  "ce5s1qpidwge8e"
+                                          "uid":  "de5rx960ppreof"
                                       },
                        "fieldConfig":  {
                                            "defaults":  {
@@ -311,7 +311,7 @@
                                        {
                                            "datasource":  {
                                                               "type":  "loki",
-                                                              "uid":  "ce5s1qpidwge8e"
+                                                              "uid":  "de5rx960ppreof"
                                                           },
                                            "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"SELECT\" |= \"mysql.user\"[1m])",
                                            "legendFormat":  "Sensitive Table Access",
@@ -324,7 +324,7 @@
                    {
                        "datasource":  {
                                           "type":  "loki",
-                                          "uid":  "ce5s1qpidwge8e"
+                                          "uid":  "de5rx960ppreof"
                                       },
                        "fieldConfig":  {
                                            "defaults":  {
@@ -411,7 +411,7 @@
                                        {
                                            "datasource":  {
                                                               "type":  "loki",
-                                                              "uid":  "ce5s1qpidwge8e"
+                                                              "uid":  "de5rx960ppreof"
                                                           },
                                            "expr":  "rate({job=\"mysql_audit_logs\"}[1m])",
                                            "legendFormat":  "Query Rate",
@@ -424,7 +424,7 @@
                    {
                        "datasource":  {
                                           "type":  "loki",
-                                          "uid":  "ce5s1qpidwge8e"
+                                          "uid":  "de5rx960ppreof"
                                       },
                        "fieldConfig":  {
                                            "defaults":  {
@@ -511,7 +511,7 @@
                                        {
                                            "datasource":  {
                                                               "type":  "loki",
-                                                              "uid":  "ce5s1qpidwge8e"
+                                                              "uid":  "de5rx960ppreof"
                                                           },
                                            "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"denied\"[1m])",
                                            "legendFormat":  "Denied Access",
@@ -607,7 +607,7 @@
                                        {
                                            "datasource":  {
                                                               "type":  "loki",
-                                                              "uid":  "ce5s1qpidwge8e"
+                                                              "uid":  "de5rx960ppreof"
                                                           },
                                            "expr":  "count_over_time({job=\"mysql_audit_logs\"} |= \"DROP TABLE\"[1m])",
                                            "legendFormat":  "Policy Violations",
@@ -634,7 +634,7 @@
                    },
     "timezone":  "",
     "title":  "MySQL Suspicious Query Monitoring",
-    "uid":  "ce5s1qpidwge8e",
+    "uid":  "de5rx960ppreof",
     "version":  15,
     "weekStart":  ""
 }

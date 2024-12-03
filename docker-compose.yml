@@ -22,7 +22,10 @@ services:
     volumes:
       - ./percona/init.sql:/docker-entrypoint-initdb.d/init.sql
       - mysql-data:/var/lib/mysql
-      - ./percona/keyring:/var/lib/mysql-keyring
+    secrets:
+      - source: keyring_vault_conf
+        target: /run/secrets/keyring_vault.conf
+        mode: 0440  # read-only access
     ports:
       - "3306:3306"
     healthcheck:
@@ -32,6 +35,30 @@ services:
       retries: 3
     command: > 
       --plugin-load=audit_log=audit_log.so
+      --default-table-encryption=ON
+      --early-plugin-load=keyring_vault=keyring_vault.so
+      --loose-keyring-vault-config=/run/secrets/keyring_vault.conf
+    depends_on:
+      vault:
+        condition: service_healthy
+
+  vault:
+    image: vault:1.13.3
+    container_name: COMP3335_vault
+    restart: on-failure:10
+    ports:
+      - "8200:8200"
+    environment:
+      VAULT_ADDR: 'http://127.0.0.1:8200'
+      VAULT_DEV_ROOT_TOKEN_ID: '00000000-0000-0000-0000-000000000000'
+    cap_add:
+      - IPC_LOCK
+    command: server -dev -dev-root-token-id="00000000-0000-0000-0000-000000000000"
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   mysqld-exporter:
     image: prom/mysqld-exporter
@@ -105,3 +132,7 @@ services:
 volumes:
   mysql-data:    # Declare MySQL data
   grafana-data:  # Declare Grafana data
+
+secrets:
+  keyring_vault_conf:
+    file: ./percona/keyring_vault.conf

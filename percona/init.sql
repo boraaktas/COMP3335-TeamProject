@@ -7,12 +7,12 @@ CREATE TABLE IF NOT EXISTS users (
     userID INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL
-);
+) ENCRYPTION='Y';
 
 CREATE TABLE IF NOT EXISTS roles (
     roleID INT AUTO_INCREMENT PRIMARY KEY,
     roleName VARCHAR(255) NOT NULL UNIQUE
-);
+) ENCRYPTION='Y';
 
 -- Insert roles into the roles table
 INSERT INTO roles (roleName)
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS userRoles (
     roleID INT NOT NULL,
     FOREIGN KEY (userID) REFERENCES users(userID) ON DELETE CASCADE,
     FOREIGN KEY (roleID) REFERENCES roles(roleID) ON DELETE CASCADE
-);
+) ENCRYPTION='Y';
 
 CREATE TABLE IF NOT EXISTS patients (
     patientID INT NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS patients (
     phoneNo VARCHAR(255),
     insuranceType VARCHAR(255) NOT NULL,
     FOREIGN KEY (patientID) REFERENCES users(userID) ON DELETE CASCADE
-);
+) ENCRYPTION='Y';
 
 CREATE TABLE IF NOT EXISTS staffs (
     staffID INT NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS staffs (
     phoneNo VARCHAR(255),
     staffRole ENUM('labStaff', 'secretary') NOT NULL,
     FOREIGN KEY (staffID) REFERENCES users(userID) ON DELETE CASCADE
-);
+) ENCRYPTION='Y';
 
 CREATE TABLE IF NOT EXISTS testCatalogs (
     testID INT AUTO_INCREMENT PRIMARY KEY,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS testCatalogs (
     testName VARCHAR(255) NOT NULL UNIQUE,
     testCost INT NOT NULL,
     testDescription TEXT NOT NULL
-);
+) ENCRYPTION='Y';
 
 CREATE TABLE IF NOT EXISTS orders (
     orderID INT AUTO_INCREMENT PRIMARY KEY,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS orders (
     FOREIGN KEY (patientID) REFERENCES patients(patientID) ON DELETE CASCADE,
     FOREIGN KEY (labStaffOrderID) REFERENCES staffs(staffID) ON DELETE CASCADE,
     FOREIGN KEY (testID) REFERENCES testCatalogs(testID) ON DELETE CASCADE
-);
+) ENCRYPTION='Y';
 
 -- Appoinments are created, updated, and deleted by the secretaries
 -- When an appointment is created, change the orderStatus to 'Pending Result'. And if it is deleted, change the orderStatus to 'Pending Appointment'
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS appointments (
     appointmentDateTime DATETIME NOT NULL,
     FOREIGN KEY (orderID) REFERENCES orders(orderID) ON DELETE CASCADE,
     FOREIGN KEY (secretaryID) REFERENCES staffs(staffID) ON DELETE CASCADE
-);
+) ENCRYPTION='Y';
 
 -- When a test result is created, change the orderStatus to 'Completed', and if it is deleted, change the orderStatus to 'Pending Result'
 -- If orderSatus of the order is not 'Pending Result', then the test result cannot be created
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS results (
     reportURL VARCHAR(255) NOT NULL,
     FOREIGN KEY (orderID) REFERENCES orders(orderID) ON DELETE CASCADE,
     FOREIGN KEY (labStaffResultID) REFERENCES staffs(staffID) ON DELETE CASCADE
-);
+) ENCRYPTION='Y';
 
 -- When an order is created, insert a row into the billings table with paymentStatus as 'Unpaid',
 -- and set insuranceClaimStatus based on the insuranceType of the patient
@@ -107,7 +107,7 @@ CREATE TABLE IF NOT EXISTS billings (
     paymentStatus BOOLEAN NOT NULL,
     insuranceClaimStatus BOOLEAN NOT NULL,
     FOREIGN KEY (orderID) REFERENCES orders(orderID) ON DELETE CASCADE
-);
+) ENCRYPTION='Y';
 
 CREATE TABLE IF NOT EXISTS acceptedInsurances (
     insuranceID INT AUTO_INCREMENT PRIMARY KEY,
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS acceptedInsurances (
     discountRate FLOAT NOT NULL, 
     -- Discount rate for the insuranceType should be between 0 and 1
     CHECK (discountRate >= 0 AND discountRate <= 1)
-);
+) ENCRYPTION='Y';
 
 -- VIEWS:
 -- Create a view to display order of a patient

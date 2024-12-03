@@ -136,7 +136,7 @@ groups:
                 conditions:
                     - evaluator:
                         params:
-                            - 10
+                            - 20
                         type: gt
                       operator:
                         type: and

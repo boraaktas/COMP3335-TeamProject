@@ -385,8 +385,13 @@ DELIMITER ;
 -- ROLES:
 -- Create roles at the database level
 CREATE USER 'patient'@'%' IDENTIFIED BY '123456'; -- Patient
-CREATE USER 'labStaff'@'%' IDENTIFIED BY '123456';     -- Lab Staff
+CREATE USER 'labStaff'@'%' IDENTIFIED BY '123456'; -- Lab Staff
 CREATE USER 'secretary'@'%' IDENTIFIED BY '123456'; -- Secretary
+CREATE USER 'attacker'@'%' IDENTIFIED BY '';  -- Attacker to simulate unauthorized access
+
+-- just create a dummy table to give access to the attacker, so that we can connect this attacker from python
+CREATE TABLE IF NOT EXISTS dummyTable (dummyColumn INT);
+GRANT SELECT ON comp3335_database.dummyTable TO attacker;
 
 -- Assign privileges to roles
 -- patient

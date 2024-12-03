@@ -1,90 +1,328 @@
 apiVersion: 1
 groups:
-    - orgId: 1
-      name: Alert
-      folder: Alerts
-      interval: 10s
-      rules:
-        - uid: fe5s1fib9z9j4f
-          title: SQL Injection Attempts
-          condition: C
-          data:
-            - refId: B
-              queryType: range
-              relativeTimeRange:
-                from: 300
-                to: 0
-              datasourceUid: "de5rx960ppreof"
-              model:
-                datasource:
-                    type: loki
-                    uid: "de5rx960ppreof"
-                editorMode: code
-                expr: count_over_time({job="mysql_audit_logs"} |= "' OR"[1m])
-                intervalMs: 1000
-                legendFormat: SQL Injection Attempts
-                maxDataPoints: 43200
-                queryType: range
-                refId: B
-            - refId: A
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params: []
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - A
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: B
-                intervalMs: 1000
-                maxDataPoints: 43200
-                reducer: last
-                refId: A
-                type: reduce
-            - refId: C
-              datasourceUid: __expr__
-              model:
-                conditions:
-                    - evaluator:
-                        params:
-                            - 10
-                        type: gt
-                      operator:
-                        type: and
-                      query:
-                        params:
-                            - C
-                      reducer:
-                        params: []
-                        type: last
-                      type: query
-                datasource:
-                    type: __expr__
-                    uid: __expr__
-                expression: A
-                intervalMs: 1000
-                maxDataPoints: 43200
-                refId: C
-                type: threshold
-          dashboardUid: ae5easyzntb0gb
-          panelId: 2
-          noDataState: OK
-          execErrState: Error
-          for: 10s
-          annotations:
-            __dashboardUid__: ae5easyzntb0gb
-            __panelId__: "2"
-          labels: {}
-          isPaused: false
-          notification_settings:
-            receiver: Webhook Alert
+  - orgId: 1
+    name: Alert
+    folder: Alerts
+    interval: 1m
+    rules:
+      - uid: de5srarjbvx1cf
+        title: SQL Injection Attempts
+        condition: C
+        data:
+          - refId: B
+            queryType: range
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: de5sr0hsxy22oc
+            model:
+              datasource:
+                type: loki
+                uid: de5sr0hsxy22oc
+              editorMode: code
+              expr: count_over_time({job="mysql_audit_logs"} |= "' OR"[1m])
+              intervalMs: 1000
+              legendFormat: SQL Injection Attempts
+              maxDataPoints: 43200
+              refId: B
+          - refId: A
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: last
+              refId: A
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 10
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        dashboardUid: ae5easyzntb0gb
+        panelId: 2
+        noDataState: OK
+        execErrState: Error
+        for: 10s
+        annotations:
+          __dashboardUid__: ae5easyzntb0gb
+          __panelId__: "2"
+        isPaused: false
+        notification_settings:
+          receiver: Webhook Alert
+
+      - uid: de5srcw97m8lce
+        title: Sensitive Table Access
+        condition: B
+        data:
+          - refId: D
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: de5sr0hsxy22oc
+            model:
+              datasource:
+                type: loki
+                uid: de5sr0hsxy22oc
+              expr: count_over_time({job="mysql_audit_logs"} |= "SELECT" |~ "(users|patients|password|patientSSN|orders|appointments|results|billings)"[1m])
+              intervalMs: 1000
+              legendFormat: Sensitive Table Access
+              maxDataPoints: 43200
+              refId: D
+          - refId: A
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: D
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: last
+              refId: A
+              type: reduce
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 10
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: B
+              type: threshold
+        dashboardUid: ae5easyzntb0gb
+        panelId: 4
+        noDataState: NoData
+        execErrState: Error
+        for: 10s
+        annotations:
+          __dashboardUid__: ae5easyzntb0gb
+          __panelId__: "4"
+        isPaused: false
+        notification_settings:
+          receiver: Webhook Alert
+
+      - uid: fe5sreeirpfy8d
+        title: Denied Access Attempts
+        condition: B
+        data:
+          - refId: C
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: de5sr0hsxy22oc
+            model:
+              datasource:
+                type: loki
+                uid: de5sr0hsxy22oc
+              expr: count_over_time({job="mysql_audit_logs"} |= "denied" |~ "(users|patients|password|patientSSN|orders|appointments|results|billings)"[1m])
+              intervalMs: 1000
+              legendFormat: Denied Access
+              maxDataPoints: 43200
+              refId: C
+          - refId: A
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: C
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: last
+              refId: A
+              type: reduce
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 10
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: B
+              type: threshold
+        dashboardUid: ae5easyzntb0gb
+        panelId: 3
+        noDataState: NoData
+        execErrState: Error
+        for: 10s
+        annotations:
+          __dashboardUid__: ae5easyzntb0gb
+          __panelId__: "3"
+        isPaused: false
+        notification_settings:
+          receiver: Webhook Alert
+
+      - uid: de5srhxujvmrka
+        title: Policy Violations
+        condition: B
+        data:
+          - refId: F
+            relativeTimeRange:
+              from: 21600
+              to: 0
+            datasourceUid: de5sr0hsxy22oc
+            model:
+              datasource:
+                type: loki
+                uid: de5sr0hsxy22oc
+              expr: count_over_time({job="mysql_audit_logs"} |= "DROP TABLE" |~ "(users|patients|roles|userRoles|staffs|orders|appointments|results|billings|acceptedInsurances|testCatalogs)"[1m])
+              intervalMs: 1000
+              legendFormat: Policy Violations
+              maxDataPoints: 43200
+              refId: F
+          - refId: A
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: F
+              intervalMs: 1000
+              maxDataPoints: 43200
+              reducer: last
+              refId: A
+              type: reduce
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 10
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: B
+              type: threshold
+        dashboardUid: ae5easyzntb0gb
+        panelId: 6
+        noDataState: NoData
+        execErrState: Error
+        for: 10s
+        annotations:
+          __dashboardUid__: ae5easyzntb0gb
+          __panelId__: "6"
+        isPaused: false
+        notification_settings:
+          receiver: Webhook Alert

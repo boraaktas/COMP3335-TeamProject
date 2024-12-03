@@ -419,5 +419,3 @@ GRANT SELECT, UPDATE ON comp3335_database.billings TO secretary;
 CREATE USER IF NOT EXISTS 'exporter'@'%' IDENTIFIED BY 'exporterpassword';
 GRANT PROCESS, REPLICATION CLIENT ON *.* TO 'exporter'@'%';
 FLUSH PRIVILEGES;
-
-INSTALL PLUGIN audit_log SONAME 'audit_log.so';

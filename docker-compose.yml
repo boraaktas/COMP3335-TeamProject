@@ -21,7 +21,6 @@ services:
       - .env
     volumes:
       - ./percona/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./percona/conf.d/my.cnf:/etc/mysql/conf.d/my.cnf
       - mysql-data:/var/lib/mysql
       - ./percona/keyring:/var/lib/mysql-keyring
     ports:
@@ -33,10 +32,6 @@ services:
       retries: 3
     command: > 
       --plugin-load=audit_log=audit_log.so
-      --default-authentication-plugin=caching_sha2_password
-      --early-plugin-load=keyring_file=keyring_file.so
-      --keyring_file_data=/var/lib/mysql-keyring/keyring
-      --default-table-encryption=ON
 
   mysqld-exporter:
     image: prom/mysqld-exporter
@@ -72,7 +67,7 @@ services:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
       - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
-      - ./grafana/provisioning/alerting:/etc/grafana/provisioning/alerting  # Mount the alerting directory
+      - ./grafana/provisioning/alerting:/etc/grafana/provisioning/alerting
       - ./grafana/dashboards:/var/lib/grafana/dashboards
 
   loki:

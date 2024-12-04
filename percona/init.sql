@@ -152,7 +152,6 @@ JOIN patients ON orders.patientID = patients.patientID;
 -- Create a view to display the orders of a lab staff
 CREATE VIEW labStaffOrders AS
 SELECT staffs.staffID AS labStaffID, orders.orderID, testCatalogs.testName,
-       patients.patientSSN AS patientSSN,
        patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
        orders.orderDate, orders.orderStatus
 FROM orders
@@ -166,7 +165,7 @@ SELECT orders.orderID,
        orders.labStaffOrderID AS labStaffOrderID, results.labStaffResultID AS labStaffResultID,
        resultStaff.firstName AS labStaffResultFirstName, resultStaff.lastName AS labStaffResultLastName,
        orderStaff.firstName AS labStaffOrderFirstName, orderStaff.lastName AS labStaffOrderLastName,
-       patients.patientSSN AS patientSSN, patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
+       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
        testCatalogs.testName, results.reportURL, results.interpretation
 FROM orders
 JOIN results ON orders.orderID = results.orderID
@@ -178,23 +177,17 @@ JOIN staffs AS orderStaff ON orders.labStaffOrderID = orderStaff.staffID;
 -- Create a view to display the appointments of a secretary
 CREATE VIEW secretaryAppointments AS
 SELECT orders.orderID, staffs.staffID AS secretaryID,
-       patients.patientSSN AS patientSSN,
-       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
        staffs.firstName AS secretaryFirstName, staffs.lastName AS secretaryLastName,
        appointments.appointmentDateTime
 FROM orders
-JOIN patients ON orders.patientID = patients.patientID
 JOIN appointments ON orders.orderID = appointments.orderID
 JOIN staffs ON appointments.secretaryID = staffs.staffID;
 
 -- Create a view to display the billings of a secretary
 CREATE VIEW secretaryBillings AS
 SELECT orders.orderID, staffs.staffID AS secretaryID,
-       patients.patientSSN AS patientSSN,
-       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
        billings.billedAmount, billings.insuranceClaimStatus, billings.paymentStatus
 FROM orders
-JOIN patients ON orders.patientID = patients.patientID
 JOIN billings ON orders.orderID = billings.orderID
 JOIN appointments ON orders.orderID = appointments.orderID
 JOIN staffs ON appointments.secretaryID = staffs.staffID;
@@ -202,11 +195,8 @@ JOIN staffs ON appointments.secretaryID = staffs.staffID;
 -- Create a view to display the results of a secretary
 CREATE VIEW secretaryResults AS
 SELECT orders.orderID, staffs.staffID AS secretaryID,
-       patients.patientSSN AS patientSSN,
-       patients.firstName AS patientFirstName, patients.lastName AS patientLastName,
        results.reportURL
 FROM orders
-JOIN patients ON orders.patientID = patients.patientID
 JOIN results ON orders.orderID = results.orderID
 JOIN appointments ON orders.orderID = appointments.orderID
 JOIN staffs ON appointments.secretaryID = staffs.staffID;
